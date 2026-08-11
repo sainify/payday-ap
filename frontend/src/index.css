@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-clay-bg dark:bg-clay-bg-dark text-ink dark:text-ink-inverted font-body antialiased;
+    overscroll-behavior-y: none;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+  ::selection {
+    @apply bg-primary/20;
+  }
+}
+
+@layer components {
+  .clay-surface {
+    @apply bg-clay-surface dark:bg-clay-surface-dark rounded-clay shadow-clay-raised dark:shadow-clay-raised-dark transition-shadow duration-300 ease-clay;
+  }
+  .clay-surface-sm {
+    @apply bg-clay-surface dark:bg-clay-surface-dark rounded-clay-sm shadow-clay-raised-sm dark:shadow-clay-raised-dark;
+  }
+  .clay-inset {
+    @apply bg-clay-bg dark:bg-clay-bg-dark rounded-clay-sm shadow-clay-inset dark:shadow-clay-inset-dark;
+  }
+  .clay-pressable {
+    @apply active:shadow-clay-inset dark:active:shadow-clay-inset-dark active:scale-[0.98] transition-all duration-150 ease-clay;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    @apply font-mono;
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
