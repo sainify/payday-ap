@@ -1,0 +1,19 @@
+{
+  "name": "payday-worker",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate": "wrangler d1 execute payday-db --file=./db/schema.sql",
+    "db:migrate:remote": "wrangler d1 execute payday-db --remote --file=./db/schema.sql",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240925.0",
+    "typescript": "^5.5.4",
+    "wrangler": "^3.78.10"
+  }
+}
