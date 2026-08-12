@@ -3,24 +3,6 @@ main = "src/index.ts"
 compatibility_date = "2024-09-25"
 compatibility_flags = ["nodejs_compat"]
 
-# Cloudflare D1 database binding.
-# Create with: wrangler d1 create payday-db
-# Then paste the returned database_id below.
-[[d1_databases]]
-binding = "DB"
-database_name = "payday-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
-
-# Frontend origin allowed to call this API with credentials.
-# Set the real values with: wrangler secret put ... (for anything sensitive)
 [vars]
 ALLOWED_ORIGIN = "http://localhost:5173"
 COOKIE_DOMAIN = ""
-
-# For production, add a second env block, e.g.:
-# [env.production]
-# vars = { ALLOWED_ORIGIN = "https://payday.pages.dev", COOKIE_DOMAIN = ".pages.dev" }
-# [[env.production.d1_databases]]
-# binding = "DB"
-# database_name = "payday-db"
-# database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
