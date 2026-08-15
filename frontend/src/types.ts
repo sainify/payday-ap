@@ -90,13 +90,35 @@ export interface LendingEntry {
   created_at?: string;
 }
 
+export interface SalaryCycle {
+  start: string;
+  end: string;
+  cycleDay: number;
+  totalDays: number;
+  daysRemaining: number;
+}
+
 export interface DashboardSummary {
+  cycle?: SalaryCycle | null;
+
+  currentSalary?: number;
+
+  availableBalance?: number;
+  safeToSpendToday?: number;
+
+  spentThisCycle?: number;
+  savedThisCycle?: number;
+
   income?: number;
   expenses?: number;
   balance?: number;
   savings?: number;
+
   pending_bills?: number;
+
+  upcomingBills?: Bill[];
   upcoming_bills?: Bill[];
+
+  recentTransactions?: Transaction[];
   recent_transactions?: Transaction[];
-  [key: string]: unknown;
 }
