@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import clsx from "clsx";
-import { Home, Receipt, PieChart, User, Plus } from "lucide-react";
+import {
+  Home,
+  Receipt,
+  PieChart,
+  User,
+  Plus,
+  type LucideIcon,
+} from "lucide-react";
 import { FabMenu } from "./FabMenu";
 
 const navItems = [
@@ -25,11 +32,14 @@ export function BottomNav() {
             {navItems.map((item) => (
               <NavItem key={item.to} {...item} />
             ))}
+
             <div className="w-16" />
+
             {navItemsRight.map((item) => (
               <NavItem key={item.to} {...item} />
             ))}
           </div>
+
           <button
             aria-label="Add"
             onClick={() => setFabOpen(true)}
@@ -39,12 +49,19 @@ export function BottomNav() {
           </button>
         </div>
       </nav>
+
       <FabMenu open={fabOpen} onClose={() => setFabOpen(false)} />
     </>
   );
 }
 
-function NavItem({ to, label, icon: Icon }: { to: string; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> }) {
+type NavItemProps = {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+};
+
+function NavItem({ to, label, icon: Icon }: NavItemProps) {
   return (
     <NavLink
       to={to}
