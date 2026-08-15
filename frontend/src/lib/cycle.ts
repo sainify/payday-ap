@@ -1,121 +1,105 @@
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  currency: string;
-  salary_cycle_day: number;
-  created_at?: string;
+import { SalaryCycle } from "@/types";
+
+/**
+ * PAYDAY calculates all "monthly" numbers on the user's SALARY CYCLE,
+ * i.e. the span between one salary date and the next — not the calendar month.
+ */
+
+function clampDay(year: number, month: number, day: number): Date {
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  return new Date(year, month, Math.min(day, lastDay));
 }
 
-export interface UserSettings {
-  user_id?: string;
-  theme: "light" | "dark" | "system";
-  active_mode?: number;
-  pin_hash?: string | null;
-  pin_enabled?: number;
-  split_needs?: number;
-  split_savings?: number;
-  split_lifestyle?: number;
-  split_goals?: number;
-  split_emergency?: number;
-  notifications_enabled?: number;
+export function getSalaryCycle(
+  salaryCycleDay: number,
+  today: Date = new Date()
+): SalaryCycle {
+  const y = today.getFullYear();
+  const m = today.getMonth();
+
+  let cycleStart = clampDay(y, m, salaryCycleDay);
+
+  if (cycleStart > today) {
+    cycleStart = clampDay(y, m - 1, salaryCycleDay);
+  }
+
+  let cycleEnd = clampDay(
+    cycleStart.getFullYear(),
+    cycleStart.getMonth() + 1,
+    salaryCycleDay
+  );
+
+  if (cycleEnd <= cycleStart) {
+    cycleEnd = clampDay(
+      cycleStart.getFullYear(),
+      cycleStart.getMonth() + 2,
+      salaryCycleDay
+    );
+  }
+
+  const msPerDay = 1000 * 60 * 60 * 24;
+
+  const totalDays = Math.round(
+    (cycleEnd.getTime() - cycleStart.getTime()) / msPerDay
+  );
+
+  const elapsed = Math.floor(
+    (startOfDay(today).getTime() - startOfDay(cycleStart).getTime()) /
+      msPerDay
+  );
+
+  const cycleDay = Math.max(1, elapsed + 1);
+  const daysRemaining = Math.max(0, totalDays - elapsed);
+
+  return {
+    start: toISODate(cycleStart),
+    end: toISODate(cycleEnd),
+    cycleDay,
+    totalDays,
+    daysRemaining,
+  };
 }
 
-export interface Category {
-  id: string;
-  user_id?: string | null;
-  name: string;
-  icon: string;
-  type: "expense" | "income";
-  is_default?: number;
+function startOfDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
-export interface Transaction {
-  id: string;
-  user_id?: string;
-  type: "expense" | "income";
-  amount: number;
-  category_id?: string | null;
-  category_name?: string | null;
-  category?: Category | null;
-  note?: string | null;
-  txn_date: string;
-  created_at?: string;
+export function toISODate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+
+  return `${y}-${m}-${day}`;
 }
 
-export interface Bill {
-  id: string;
-  user_id?: string;
-  title: string;
-  amount: number;
-  due_date: string;
-  recurrence: "one_time" | "monthly" | "weekly" | "yearly";
-  status: "pending" | "paid" | "overdue";
-  category?: string | null;
-  created_at?: string;
+export function calcSafeToSpend(
+  availableBalance: number,
+  upcomingBillsTotal: number,
+  daysRemaining: number
+): number {
+  const safeBucket = Math.max(
+    0,
+    availableBalance - upcomingBillsTotal
+  );
+
+  const days = Math.max(1, daysRemaining);
+
+  return safeBucket / days;
 }
 
-export interface Goal {
-  id: string;
-  user_id?: string;
-  title: string;
-  target_amount: number;
-  saved_amount: number;
-  target_date?: string | null;
-  icon?: string;
-  created_at?: string;
-}
+export function predictCycleEndBalance(
+  availableBalance: number,
+  spentThisCycle: number,
+  cycleDay: number,
+  totalDays: number
+): number {
+  const avgDailySpend =
+    cycleDay > 0 ? spentThisCycle / cycleDay : 0;
 
-export interface SalaryEntry {
-  id: string;
-  user_id?: string;
-  amount: number;
-  salary_date: string;
-  note?: string | null;
-  created_at?: string;
-}
+  const daysLeft = Math.max(
+    0,
+    totalDays - cycleDay
+  );
 
-export type LendingType = "lent" | "borrowed";
-
-export interface LendingEntry {
-  id: string;
-  user_id?: string;
-  type: LendingType;
-  person_name: string;
-  amount: number;
-  settled_amount: number;
-  status: "open" | "settled";
-  due_date?: string | null;
-  note?: string | null;
-  created_at?: string;
-}
-
-export interface SalaryCycle {
-  start: string;
-  end: string;
-  cycleDay: number;
-  totalDays: number;
-  daysRemaining: number;
-}
-
-export interface DashboardSummary {
-  cycle?: SalaryCycle | null;
-  currentSalary?: number;
-  availableBalance?: number;
-  safeToSpendToday?: number;
-  spentThisCycle?: number;
-  savedThisCycle?: number;
-
-  income?: number;
-  expenses?: number;
-  balance?: number;
-  savings?: number;
-
-  pending_bills?: number;
-
-  upcomingBills?: Bill[];
-  upcoming_bills?: Bill[];
-
-  recentTransactions?: Transaction[];
-  recent_transactions?: Transaction[];
+  return availableBalance - avgDailySpend * daysLeft;
 }
