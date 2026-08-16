@@ -30,9 +30,14 @@ jobs:
 
       - name: Extract upgrade
         run: |
+          rm -rf /tmp/payday-upgrade
           mkdir -p /tmp/payday-upgrade
           unzip -q PAYDAY-smart-finance-upgrade.zip -d /tmp/payday-upgrade
           cp -a /tmp/payday-upgrade/PAYDAY-smart-finance-upgrade/. .
+
+      - name: Remove generated verify workflow
+        run: |
+          rm -f .github/workflows/verify.yml
 
       - name: Build frontend
         working-directory: frontend
@@ -50,9 +55,10 @@ jobs:
         run: |
           rm -rf frontend/node_modules frontend/dist
           rm -rf worker/node_modules worker/dist
-          rm -f frontend/package-lock.json worker/package-lock.json
+          rm -f frontend/package-lock.json
+          rm -f worker/package-lock.json
           rm -f PAYDAY-smart-finance-upgrade.zip
-          rm -f .github/workflows/apply-payday-upgrade.yml
+          rm -f .github/workflows/verify.yml
 
       - name: Commit upgraded PAYDAY
         run: |
