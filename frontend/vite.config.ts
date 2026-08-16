@@ -83,24 +83,11 @@ export default defineConfig({
 
         runtimeCaching: [
           {
-            urlPattern: ({ url }: { url: URL }) =>
-              url.pathname.startsWith("/api/"),
-
-            handler: "NetworkFirst",
-
-            options: {
-              cacheName: "payday-api-cache",
-              networkTimeoutSeconds: 4,
-
-              expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 60 * 60 * 24 * 3,
-              },
-
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
+            // Authenticated financial API responses are intentionally not stored
+            // in the service-worker cache. The app's user-scoped local cache
+            // handles offline reads without risking cross-account data leakage.
+            urlPattern: ({ url }: { url: URL }) => url.pathname.startsWith("/api/"),
+            handler: "NetworkOnly",
           },
         ],
       },

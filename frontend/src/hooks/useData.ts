@@ -10,6 +10,13 @@ import {
   Category,
   SalaryEntry,
   UserSettings,
+  Budget,
+  RecurringExpense,
+  EmergencyFund,
+  Debt,
+  ReminderItem,
+  ReminderPreference,
+  SalaryCycle,
 } from "@/types";
 
 function useResource<T>(key: string, path: string, deps: unknown[] = []) {
@@ -46,8 +53,19 @@ export function useDashboard() {
   return useResource<DashboardSummary>("dashboard", "/dashboard");
 }
 
-export function useTransactions(params?: { q?: string; type?: string; category?: string; from?: string; to?: string }) {
-  const qs = params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "";
+export interface TransactionFilters {
+  q?: string;
+  type?: string;
+  category?: string;
+  from?: string;
+  to?: string;
+  min?: string;
+  max?: string;
+}
+
+export function useTransactions(params?: TransactionFilters) {
+  const clean = params ? Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== "")) : {};
+  const qs = Object.keys(clean).length ? "?" + new URLSearchParams(clean as Record<string, string>).toString() : "";
   return useResource<Transaction[]>(`transactions${qs}`, `/transactions${qs}`, [qs]);
 }
 
@@ -70,6 +88,27 @@ export function useCategories(type?: "expense" | "income") {
 
 export function useSalaryHistory() {
   return useResource<SalaryEntry[]>("salary-history", "/salary");
+}
+
+export function useBudgets() {
+  return useResource<{ cycle: SalaryCycle; items: Budget[] }>("budgets", "/budgets");
+}
+
+export function useRecurring(kind?: "subscription" | "expense") {
+  const qs = kind ? `?kind=${kind}` : "";
+  return useResource<RecurringExpense[]>(`recurring${qs}`, `/recurring${qs}`, [qs]);
+}
+
+export function useEmergencyFund() {
+  return useResource<EmergencyFund>("emergency-fund", "/emergency-fund");
+}
+
+export function useDebts() {
+  return useResource<Debt[]>("debts", "/debts");
+}
+
+export function useReminderCenter() {
+  return useResource<{ preferences: ReminderPreference; reminders: ReminderItem[] }>("reminders", "/notifications");
 }
 
 /** Fire-and-forget mutation helper with offline queueing. */

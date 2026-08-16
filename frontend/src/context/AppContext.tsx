@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { api, ApiError } from "@/lib/api";
 import { User, UserSettings } from "@/types";
-import { getPrivacyMode, setPrivacyMode as persistPrivacy, getTheme, setTheme as persistTheme } from "@/lib/storage";
+import { getPrivacyMode, setPrivacyMode as persistPrivacy, getTheme, setTheme as persistTheme, switchUserScope, clearUserScope, getQueue, clearQueueItem } from "@/lib/storage";
 
 interface AppContextValue {
   user: User | null;
@@ -36,6 +36,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       const me = await api.get<{ user: User; settings: UserSettings }>("/me");
+      switchUserScope(me.user.id);
       setUser(me.user);
       setSettings(me.settings);
       if (me.settings.theme) {
@@ -44,6 +45,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (e) {
       if (e instanceof ApiError && (e.status === 401 || e.status === 404)) {
+        clearUserScope();
         setUser(null);
         setSettings(null);
       }
@@ -60,6 +62,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     applyThemeClass(theme);
   }, [theme]);
 
+  useEffect(() => {
+    if (!user) return;
+    const flush = async () => {
+      if (!navigator.onLine) return;
+      for (const item of getQueue()) {
+        try {
+          if (item.method === "POST") await api.post(item.path, item.body);
+          else if (item.method === "PATCH") await api.patch(item.path, item.body);
+          else await api.del(item.path);
+          clearQueueItem(item.id);
+        } catch {
+          break;
+        }
+      }
+    };
+    flush();
+    window.addEventListener("online", flush);
+    return () => window.removeEventListener("online", flush);
+  }, [user]);
+
   const togglePrivacy = () => {
     const next = !privacyMode;
     setPrivacyModeState(next);
@@ -75,6 +97,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     await api.post("/auth/logout").catch(() => {});
+    clearUserScope();
     setUser(null);
     setSettings(null);
   };

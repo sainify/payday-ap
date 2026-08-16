@@ -1,0 +1,14 @@
+PAYDAY SMART FINANCE UPGRADE — VERIFICATION REPORT
+
+Local working branch: feature/smart-finance-upgrade
+
+Checks completed in the build sandbox:
+[PASS] TypeScript/TSX syntax transpilation check across frontend/src and worker/src
+[PASS] Full worker/db/schema.sql executed successfully in SQLite
+[PASS] migration-002-smart-finance.sql executed successfully on the original schema
+[PASS] Representative D1/SQLite queries for budgets, recurring items, debts and user isolation
+[PASS] git diff --check (no whitespace/patch errors)
+[PASS] All local @/ and relative frontend imports resolve to project files
+
+Full npm/Vite dependency build note:
+The sandbox cannot resolve registry.npmjs.org, so npm dependencies could not be downloaded and a real `npm run build` / Worker package typecheck could not be completed locally. The package therefore includes `.github/workflows/verify.yml`, which runs the real frontend build and Worker typecheck on GitHub. Do NOT merge the feature branch into main until both GitHub Actions jobs are green.

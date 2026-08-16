@@ -84,3 +84,36 @@ export function isUnlocked(): boolean {
 export function lockNow() {
   sessionStorage.removeItem(UNLOCKED_KEY);
 }
+
+const ACTIVE_USER_KEY = "payday:active-user";
+
+/** Clears only financial/offline data, keeping device UI preferences intact. */
+export function clearFinancialLocalData() {
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(CACHE_PREFIX)) keys.push(key);
+    }
+    keys.forEach((key) => localStorage.removeItem(key));
+    localStorage.removeItem(QUEUE_KEY);
+  } catch {
+    /* ignore unavailable storage */
+  }
+}
+
+/** Prevents cached/queued data from one account appearing in another account. */
+export function switchUserScope(userId: string) {
+  try {
+    const previous = localStorage.getItem(ACTIVE_USER_KEY);
+    if (previous && previous !== userId) clearFinancialLocalData();
+    localStorage.setItem(ACTIVE_USER_KEY, userId);
+  } catch {
+    /* ignore unavailable storage */
+  }
+}
+
+export function clearUserScope() {
+  clearFinancialLocalData();
+  try { localStorage.removeItem(ACTIVE_USER_KEY); } catch { /* ignore */ }
+}

@@ -10,6 +10,7 @@ export interface User {
 export interface UserSettings {
   user_id?: string;
   theme: "light" | "dark" | "system";
+  privacy_mode?: number;
   active_mode?: number;
   pin_hash?: string | null;
   pin_enabled?: number;
@@ -37,6 +38,7 @@ export interface Transaction {
   amount: number;
   category_id?: string | null;
   category_name?: string | null;
+  category_icon?: string | null;
   category?: Category | null;
   note?: string | null;
   txn_date: string;
@@ -90,6 +92,85 @@ export interface LendingEntry {
   created_at?: string;
 }
 
+export interface Budget {
+  id: string;
+  category_id: string;
+  category_name: string;
+  category_icon?: string;
+  limit_amount: number;
+  spent: number;
+  remaining: number;
+  percent_used: number;
+}
+
+export interface RecurringExpense {
+  id: string;
+  title: string;
+  amount: number;
+  category_id?: string | null;
+  category_name?: string | null;
+  category_icon?: string | null;
+  frequency: "weekly" | "monthly" | "yearly";
+  next_due_date: string;
+  is_subscription: number;
+  active: number;
+  note?: string | null;
+  created_at?: string;
+}
+
+export interface EmergencyFund {
+  user_id: string;
+  target_amount: number;
+  saved_amount: number;
+  percent: number;
+  updated_at?: string;
+}
+
+export interface Debt {
+  id: string;
+  title: string;
+  lender?: string | null;
+  principal_amount: number;
+  outstanding_amount: number;
+  emi_amount: number;
+  interest_rate: number;
+  next_due_date?: string | null;
+  status: "active" | "paid";
+  note?: string | null;
+  created_at?: string;
+}
+
+export interface ReminderPreference {
+  bills: number;
+  budgets: number;
+  subscriptions: number;
+  debts: number;
+  days_before: number;
+}
+
+export interface ReminderItem {
+  id: string;
+  type: string;
+  severity: "info" | "warning" | "danger";
+  title: string;
+  message: string;
+  date?: string;
+}
+
+export interface SmartAlert {
+  type: string;
+  severity: "info" | "warning" | "danger";
+  title: string;
+  message: string;
+}
+
+export interface Forecast {
+  predictedEndBalance: number;
+  rawPredictedEndBalance: number;
+  avgDailySpend: number;
+  knownFutureCommitments: number;
+}
+
 export interface SalaryCycle {
   start: string;
   end: string;
@@ -100,25 +181,20 @@ export interface SalaryCycle {
 
 export interface DashboardSummary {
   cycle?: SalaryCycle | null;
-
   currentSalary?: number;
-
   availableBalance?: number;
   safeToSpendToday?: number;
-
   spentThisCycle?: number;
   savedThisCycle?: number;
-
   income?: number;
   expenses?: number;
   balance?: number;
   savings?: number;
-
   pending_bills?: number;
-
   upcomingBills?: Bill[];
   upcoming_bills?: Bill[];
-
   recentTransactions?: Transaction[];
   recent_transactions?: Transaction[];
+  smartAlerts?: SmartAlert[];
+  forecast?: Forecast;
 }

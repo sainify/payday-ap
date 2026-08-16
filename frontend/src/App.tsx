@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { isUnlocked, lockNow } from "@/lib/storage";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { surfaceDueReminder } from "@/lib/notifications";
 
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
@@ -18,6 +19,11 @@ import SalaryHistory from "@/pages/SalaryHistory";
 import SalarySplitter from "@/pages/SalarySplitter";
 import CalendarPage from "@/pages/Calendar";
 import Goals from "@/pages/Goals";
+import Budgets from "@/pages/Budgets";
+import Recurring from "@/pages/Recurring";
+import EmergencyFund from "@/pages/EmergencyFund";
+import Debts from "@/pages/Debts";
+import ReminderCenter from "@/pages/ReminderCenter";
 
 function Splash() {
   return (
@@ -50,6 +56,11 @@ export default function App() {
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
 
+  useEffect(() => {
+    if (!user || !settings?.notifications_enabled) return;
+    surfaceDueReminder();
+  }, [user, settings?.notifications_enabled]);
+
   if (loading) return <Splash />;
 
   if (!user) {
@@ -81,6 +92,11 @@ export default function App() {
         <Route path="/splitter" element={<SalarySplitter />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/goals" element={<Goals />} />
+        <Route path="/budgets" element={<Budgets />} />
+        <Route path="/recurring" element={<Recurring />} />
+        <Route path="/emergency-fund" element={<EmergencyFund />} />
+        <Route path="/debts" element={<Debts />} />
+        <Route path="/reminders" element={<ReminderCenter />} />
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="/register" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />

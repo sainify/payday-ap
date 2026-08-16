@@ -1,0 +1,24 @@
+PAYDAY UPGRADE — PHONE ONLY
+
+IMPORTANT: Do not replace the live main branch first.
+
+1) In GitHub open sainify/payday-ap.
+2) Tap the branch button that currently says main.
+3) Create a new branch named: feature/smart-finance-upgrade
+4) Upload/replace the files from this upgraded project on that branch.
+5) Open GitHub > Actions > Verify PAYDAY.
+6) Wait until both checks are green:
+   - Frontend build
+   - Worker typecheck
+7) Before deploying Worker, open Cloudflare > D1 > payday-db > Console.
+8) Open worker/db/migration-002-smart-finance.sql from this package, copy ALL SQL, paste it into D1 Console, then Execute.
+9) Confirm it completes without an error.
+   NOTE: worker/wrangler.toml is set to ALLOWED_ORIGIN=https://payday-ap.pages.dev. If you later add a custom frontend domain, update this value to that domain before deploying the Worker.
+10) Deploy the Worker from the feature branch / upgraded worker code.
+11) Deploy Cloudflare Pages from the upgraded frontend code.
+12) Test login, current Home, + button, transactions, Safe to Spend Today, Salary Splitter and existing features.
+13) Test new Budgets, Recurring, Emergency Fund, Debt & EMI, Reminders and exports.
+14) Create/login a second account and confirm first user's entries do NOT appear.
+15) Only after everything is working, merge the feature branch into main.
+
+Migration is additive: it creates new tables and does not delete existing user data.

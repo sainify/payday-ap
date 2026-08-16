@@ -1,8 +1,5 @@
 // In dev, Vite proxies /api -> the local Worker (see vite.config.ts).
-// In production, set VITE_API_BASE_URL to your deployed Worker URL
-// (e.g. https://payday-api.yourname.workers.dev/api) if the frontend and
-// Worker are on different domains. Leave unset if you're proxying /api
-// through the same domain (e.g. via a Cloudflare Pages Function).
+// In production, set VITE_API_BASE_URL to your deployed Worker URL.
 const BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export class ApiError extends Error {
@@ -38,6 +35,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function download(path: string): Promise<Blob> {
+  const res = await fetch(`${BASE}${path}`, { credentials: "include" });
+  if (!res.ok) throw new ApiError(res.statusText || "Download failed", res.status);
+  return res.blob();
+}
+
 export const api = {
   get: <T>(path: string) => request<T>(path, { method: "GET" }),
   post: <T>(path: string, body?: unknown) =>
@@ -45,4 +48,5 @@ export const api = {
   patch: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
   del: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+  download,
 };

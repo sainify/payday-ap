@@ -7,6 +7,9 @@ export async function listTransactions(ctx: Ctx): Promise<Response> {
   const category = searchParams.get("category");
   const from = searchParams.get("from");
   const to = searchParams.get("to");
+  const q = searchParams.get("q")?.trim();
+  const min = searchParams.get("min");
+  const max = searchParams.get("max");
 
   let sql = `
     SELECT t.*, c.name AS category_name, c.icon AS category_icon
@@ -15,7 +18,7 @@ export async function listTransactions(ctx: Ctx): Promise<Response> {
     WHERE t.user_id = ?`;
   const params: unknown[] = [ctx.userId];
 
-  if (type) {
+  if (type && ["expense", "income"].includes(type)) {
     sql += " AND t.type = ?";
     params.push(type);
   }
@@ -30,6 +33,19 @@ export async function listTransactions(ctx: Ctx): Promise<Response> {
   if (to) {
     sql += " AND t.txn_date <= ?";
     params.push(to);
+  }
+  if (q) {
+    sql += " AND (LOWER(COALESCE(t.note,'')) LIKE ? OR LOWER(COALESCE(c.name,'')) LIKE ?)";
+    const like = `%${q.toLowerCase()}%`;
+    params.push(like, like);
+  }
+  if (min && Number.isFinite(Number(min))) {
+    sql += " AND t.amount >= ?";
+    params.push(Number(min));
+  }
+  if (max && Number.isFinite(Number(max))) {
+    sql += " AND t.amount <= ?";
+    params.push(Number(max));
   }
   sql += " ORDER BY t.txn_date DESC, t.created_at DESC LIMIT 500";
 
@@ -51,6 +67,13 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
   }
   if (!body.amount || body.amount <= 0) return errorResponse("Amount must be greater than zero.", 400, ctx.origin);
   if (!body.txn_date) return errorResponse("A transaction date is required.", 400, ctx.origin);
+
+  if (body.category_id) {
+    const category = await ctx.env.DB.prepare(
+      "SELECT id FROM categories WHERE id = ? AND type = ? AND (user_id IS NULL OR user_id = ?)"
+    ).bind(body.category_id, body.type, ctx.userId).first();
+    if (!category) return errorResponse("Category not found.", 404, ctx.origin);
+  }
 
   const id = crypto.randomUUID();
   await ctx.env.DB.prepare(

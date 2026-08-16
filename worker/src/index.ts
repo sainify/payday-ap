@@ -14,6 +14,11 @@ import * as dashboard from "./routes/dashboard";
 import * as insights from "./routes/insights";
 import * as calendarRoute from "./routes/calendar";
 import * as exportRoute from "./routes/export";
+import * as budgets from "./routes/budgets";
+import * as recurring from "./routes/recurring";
+import * as emergency from "./routes/emergency";
+import * as debts from "./routes/debts";
+import * as notifications from "./routes/notifications";
 
 // Routes that don't require a logged-in session.
 const PUBLIC_PATHS = new Set(["/api/auth/register", "/api/auth/login"]);
@@ -21,9 +26,17 @@ const PUBLIC_PATHS = new Set(["/api/auth/register", "/api/auth/login"]);
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    const origin = request.headers.get("Origin") || env.ALLOWED_ORIGIN;
+    const requestOrigin = request.headers.get("Origin");
+    const allowedOrigin = env.ALLOWED_ORIGIN || "https://payday-ap.pages.dev";
+    const origin = requestOrigin || allowedOrigin;
     const path = url.pathname;
     const method = request.method;
+
+    // Do not reflect arbitrary origins for credentialed requests. This keeps
+    // session cookies and financial APIs limited to the PAYDAY frontend.
+    if (requestOrigin && requestOrigin !== allowedOrigin && requestOrigin !== "http://localhost:5173") {
+      return errorResponse("Origin not allowed.", 403, allowedOrigin);
+    }
 
     if (method === "OPTIONS") {
       return new Response(null, { headers: corsHeaders(origin) });
@@ -102,6 +115,39 @@ export default {
       if (segments[0] === "lending" && segments[1] && segments[2] === "settle" && method === "PATCH")
         return await lending.settleLending(ctx, segments[1]);
 
+      // ── Budgets ───────────────────────────────────────────
+      if (sub === "/budgets" && method === "GET") return await budgets.listBudgets(ctx);
+      if (sub === "/budgets" && method === "POST") return await budgets.upsertBudget(ctx);
+      if (segments[0] === "budgets" && segments[1] && method === "DELETE")
+        return await budgets.deleteBudget(ctx, segments[1]);
+
+      // ── Recurring expenses / subscriptions ────────────────
+      if (sub === "/recurring" && method === "GET") return await recurring.listRecurring(ctx);
+      if (sub === "/recurring" && method === "POST") return await recurring.createRecurring(ctx);
+      if (segments[0] === "recurring" && segments[1] && segments[2] === "log" && method === "POST")
+        return await recurring.logRecurring(ctx, segments[1]);
+      if (segments[0] === "recurring" && segments[1] && method === "PATCH")
+        return await recurring.updateRecurring(ctx, segments[1]);
+      if (segments[0] === "recurring" && segments[1] && method === "DELETE")
+        return await recurring.deleteRecurring(ctx, segments[1]);
+
+      // ── Emergency fund ────────────────────────────────────
+      if (sub === "/emergency-fund" && method === "GET") return await emergency.getEmergencyFund(ctx);
+      if (sub === "/emergency-fund" && method === "PATCH") return await emergency.setEmergencyTarget(ctx);
+      if (sub === "/emergency-fund/contribute" && method === "POST") return await emergency.contributeEmergency(ctx);
+
+      // ── Debt / EMI manager ────────────────────────────────
+      if (sub === "/debts" && method === "GET") return await debts.listDebts(ctx);
+      if (sub === "/debts" && method === "POST") return await debts.createDebt(ctx);
+      if (segments[0] === "debts" && segments[1] && segments[2] === "pay" && method === "POST")
+        return await debts.payDebt(ctx, segments[1]);
+      if (segments[0] === "debts" && segments[1] && method === "DELETE")
+        return await debts.deleteDebt(ctx, segments[1]);
+
+      // ── Reminder center ───────────────────────────────────
+      if (sub === "/notifications" && method === "GET") return await notifications.getReminderCenter(ctx);
+      if (sub === "/notifications/preferences" && method === "PATCH") return await notifications.updateReminderPreferences(ctx);
+
       // ── Dashboard ─────────────────────────────────────────
       if (sub === "/dashboard" && method === "GET") return await dashboard.getDashboard(ctx);
 
@@ -109,6 +155,7 @@ export default {
       if (sub === "/insights/spending-breakdown" && method === "GET") return await insights.spendingBreakdown(ctx);
       if (sub === "/insights/salary-growth" && method === "GET") return await insights.salaryGrowth(ctx);
       if (sub === "/insights/prediction" && method === "GET") return await insights.prediction(ctx);
+      if (sub === "/insights/overview" && method === "GET") return await insights.overview(ctx);
       if (sub === "/insights/can-i-afford" && method === "POST") return await insights.canIAfford(ctx);
 
       // ── Calendar ──────────────────────────────────────────
