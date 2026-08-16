@@ -47,6 +47,7 @@ export async function listTransactions(ctx: Ctx): Promise<Response> {
     sql += " AND t.amount <= ?";
     params.push(Number(max));
   }
+
   sql += " ORDER BY t.txn_date DESC, t.created_at DESC LIMIT 500";
 
   const { results } = await ctx.env.DB.prepare(sql).bind(...params).all();
@@ -73,14 +74,18 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
     return errorResponse("A transaction date is required.", 400, ctx.origin);
   }
 
-  if (body.id) {
+  const editId = body.id || ctx.url.searchParams.get("edit_id") || undefined;
+
+  if (editId) {
     const existing = await ctx.env.DB.prepare(
       "SELECT id, type FROM transactions WHERE id = ? AND user_id = ?"
     )
-      .bind(body.id, ctx.userId)
+      .bind(editId, ctx.userId)
       .first<{ id: string; type: "expense" | "income" }>();
 
-    if (!existing) return errorResponse("Transaction not found.", 404, ctx.origin);
+    if (!existing) {
+      return errorResponse("Transaction not found. No new transaction was created.", 404, ctx.origin);
+    }
 
     if (body.type !== existing.type) {
       return errorResponse("Transaction type cannot be changed.", 400, ctx.origin);
@@ -93,7 +98,9 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
         .bind(body.category_id, existing.type, ctx.userId)
         .first();
 
-      if (!category) return errorResponse("Category not found.", 404, ctx.origin);
+      if (!category) {
+        return errorResponse("Category not found.", 404, ctx.origin);
+      }
     }
 
     await ctx.env.DB.prepare(
@@ -104,19 +111,20 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
         body.category_id || null,
         body.note || null,
         body.txn_date,
-        body.id,
+        editId,
         ctx.userId
       )
       .run();
 
     return json(
       {
-        id: body.id,
+        id: editId,
         type: existing.type,
         amount: body.amount,
         category_id: body.category_id || null,
         note: body.note || null,
         txn_date: body.txn_date,
+        updated: true,
       },
       {},
       ctx.origin
@@ -130,7 +138,9 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
       .bind(body.category_id, body.type, ctx.userId)
       .first();
 
-    if (!category) return errorResponse("Category not found.", 404, ctx.origin);
+    if (!category) {
+      return errorResponse("Category not found.", 404, ctx.origin);
+    }
   }
 
   const id = crypto.randomUUID();
@@ -164,7 +174,9 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
 }
 
 export async function deleteTransaction(ctx: Ctx, id: string): Promise<Response> {
-  await ctx.env.DB.prepare("DELETE FROM transactions WHERE id = ? AND user_id = ?")
+  await ctx.env.DB.prepare(
+    "DELETE FROM transactions WHERE id = ? AND user_id = ?"
+  )
     .bind(id, ctx.userId)
     .run();
 

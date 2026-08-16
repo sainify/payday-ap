@@ -92,7 +92,10 @@ export default function Transactions() {
     setEditError(null);
 
     try {
-      await mutate("/transactions", "POST", {
+      // IMPORTANT: edit_id is also carried in the URL.
+      // This makes this request update-only and prevents an accidental INSERT
+      // if a stale/cached client loses the id field in the JSON body.
+      await mutate(`/transactions?edit_id=${encodeURIComponent(editing.id)}`, "POST", {
         id: editing.id,
         type: editing.type,
         amount,
@@ -100,6 +103,7 @@ export default function Transactions() {
         note: editNote.trim() || null,
         txn_date: editDate,
       });
+
       setEditing(null);
       await reload();
     } catch (e) {
@@ -134,6 +138,7 @@ export default function Transactions() {
   return (
     <div className="pb-28">
       <TopBar title="Transactions" subtitle="Every rupee, tracked" />
+
       <div className="px-5 space-y-4">
         <div className="flex items-center gap-2 clay-inset px-4 py-3">
           <Search size={18} className="text-ink-faint" />
@@ -209,6 +214,7 @@ export default function Transactions() {
             <div className="text-xs font-semibold text-ink-faint uppercase tracking-wide mb-2 px-1">
               {day}
             </div>
+
             <ClayCard className="!p-2 space-y-1">
               {txns.map((t) => (
                 <button
@@ -233,6 +239,7 @@ export default function Transactions() {
                         <TrendingUp size={17} />
                       )}
                     </div>
+
                     <div className="min-w-0">
                       <div className="font-medium text-sm truncate">
                         {t.note || t.category_name || "Transaction"}
@@ -242,6 +249,7 @@ export default function Transactions() {
                       </div>
                     </div>
                   </div>
+
                   <div className="flex items-center gap-2 shrink-0">
                     <Amount
                       value={t.type === "expense" ? -t.amount : t.amount}
