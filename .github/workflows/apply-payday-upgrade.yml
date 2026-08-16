@@ -1,0 +1,63 @@
+name: Apply PAYDAY Upgrade
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check upgrade ZIP
+        run: |
+          test -f PAYDAY-smart-finance-upgrade.zip || {
+            echo "PAYDAY-smart-finance-upgrade.zip not found"
+            exit 1
+          }
+
+      - name: Extract upgrade
+        run: |
+          mkdir -p /tmp/payday-upgrade
+          unzip -q PAYDAY-smart-finance-upgrade.zip -d /tmp/payday-upgrade
+          cp -a /tmp/payday-upgrade/PAYDAY-smart-finance-upgrade/. .
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm install --no-package-lock
+          npm run build
+
+      - name: Typecheck Worker
+        working-directory: worker
+        run: |
+          npm install --no-package-lock
+          npx tsc --noEmit
+
+      - name: Clean generated files
+        run: |
+          rm -rf frontend/node_modules frontend/dist
+          rm -rf worker/node_modules worker/dist
+          rm -f frontend/package-lock.json worker/package-lock.json
+          rm -f PAYDAY-smart-finance-upgrade.zip
+          rm -f .github/workflows/apply-payday-upgrade.yml
+
+      - name: Commit upgraded PAYDAY
+        run: |
+          git config user.name "PAYDAY Upgrade Bot"
+          git config user.email "actions@github.com"
+          git add -A
+          git commit -m "Upgrade PAYDAY smart finance features"
+          git push origin main
