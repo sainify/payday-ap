@@ -6,3 +6,8 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 ALLOWED_ORIGIN = "https://payday-ap.pages.dev"
 COOKIE_DOMAIN = ""
+
+[[d1_databases]]
+binding = "DB"
+database_name = "payday-db"
+database_id = "00000016-00000000-000050c9-fb30491e1357a0df93e7ae42734ac385"
