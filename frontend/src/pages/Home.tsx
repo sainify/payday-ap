@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import {
   Wallet, TrendingDown, TrendingUp, PiggyBank, Receipt, ChevronRight, AlertCircle, Check,
-  Sparkles, Gauge, Repeat2, ShieldCheck, Landmark, Bell, Target,
+  Sparkles, Gauge, Repeat2, ShieldCheck, Landmark, Bell, Target, ScanLine, Archive,
 } from "lucide-react";
 import { ClayCard } from "@/components/ui/ClayCard";
 import { ProgressRing } from "@/components/ui/ProgressRing";
@@ -72,6 +72,13 @@ export default function Home() {
         <ClayCard>
           <div className="flex items-center justify-between mb-3"><h3 className="font-display font-semibold flex items-center gap-2"><Receipt size={18}/> Recent Transactions</h3><Link to="/transactions" className="text-primary text-sm font-semibold flex items-center">View all<ChevronRight size={16}/></Link></div>
           {(data?.recentTransactions?.length ?? 0) === 0 ? <p className="text-sm text-ink-faint">Your latest income and expenses will appear here.</p> : <div className="space-y-1">{data?.recentTransactions?.slice(0,3).map((t) => <div key={t.id} className="flex items-center justify-between px-1 py-2"><div className="flex items-center gap-3 min-w-0"><div className={clsx("h-9 w-9 rounded-clay-sm flex items-center justify-center", t.type === "expense" ? "bg-coral-soft text-coral" : "bg-mint-soft text-mint")}>{t.type === "expense" ? <TrendingDown size={16}/> : <TrendingUp size={16}/>}</div><div className="min-w-0"><div className="font-medium text-sm truncate">{t.note || t.category_name || "Transaction"}</div><div className="text-xs text-ink-faint">{new Date(`${t.txn_date}T00:00:00`).toLocaleDateString("en-IN", {day:"numeric",month:"short"})}</div></div></div><Amount value={t.type === "expense" ? -t.amount : t.amount} sign size="sm" className={t.type === "expense" ? "text-coral" : "text-mint"}/></div>)}</div>}
+        </ClayCard>
+
+        <ClayCard className="!p-4 bg-primary-soft/60">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0"><div className="h-11 w-11 rounded-clay-sm bg-primary text-white flex items-center justify-center shrink-0"><ScanLine size={20}/></div><div><div className="font-semibold">Smart Expense Scanner</div><div className="text-xs text-ink-faint mt-0.5">Scan · review · save · auto-update balance</div></div></div>
+            <div className="flex gap-2"><Link to="/receipts" aria-label="Receipt vault" className="h-9 w-9 clay-surface-sm rounded-clay-sm flex items-center justify-center text-primary"><Archive size={16}/></Link><Link to="/expense-scanner" className="px-3 py-2 rounded-clay-sm bg-primary text-white text-xs font-semibold">Scan</Link></div>
+          </div>
         </ClayCard>
 
         <div className="grid grid-cols-2 gap-4">

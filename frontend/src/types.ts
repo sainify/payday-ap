@@ -198,3 +198,26 @@ export interface DashboardSummary {
   smartAlerts?: SmartAlert[];
   forecast?: Forecast;
 }
+
+export interface ReceiptItem {
+  id?: string;
+  item_name: string;
+  quantity: number;
+  amount: number;
+}
+
+export interface ReceiptRecord {
+  id: string;
+  transaction_id?: string | null;
+  merchant: string | null;
+  receipt_date: string;
+  total_amount: number;
+  tax_amount: number;
+  category_id?: string | null;
+  category_name?: string | null;
+  category_icon?: string | null;
+  payment_method: string;
+  note?: string | null;
+  created_at?: string;
+  items?: ReceiptItem[];
+}

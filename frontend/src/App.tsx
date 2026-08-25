@@ -24,6 +24,8 @@ import Recurring from "@/pages/Recurring";
 import EmergencyFund from "@/pages/EmergencyFund";
 import Debts from "@/pages/Debts";
 import ReminderCenter from "@/pages/ReminderCenter";
+import ExpenseScanner from "@/pages/ExpenseScanner";
+import ReceiptVault from "@/pages/ReceiptVault";
 
 function Splash() {
   return (
@@ -97,6 +99,8 @@ export default function App() {
         <Route path="/emergency-fund" element={<EmergencyFund />} />
         <Route path="/debts" element={<Debts />} />
         <Route path="/reminders" element={<ReminderCenter />} />
+        <Route path="/expense-scanner" element={<ExpenseScanner />} />
+        <Route path="/receipts" element={<ReceiptVault />} />
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="/register" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />

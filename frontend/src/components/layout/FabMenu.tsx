@@ -1,11 +1,12 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Sheet } from "@/components/ui/Sheet";
-import { TrendingDown, TrendingUp, Landmark, Receipt, Target, Repeat2, HandCoins, ShieldCheck } from "lucide-react";
+import { TrendingDown, TrendingUp, Landmark, Receipt, Target, Repeat2, HandCoins, ShieldCheck, ScanLine } from "lucide-react";
 
 interface FabMenuProps { open: boolean; onClose: () => void; }
 
 const options = [
+  { to: "/expense-scanner", label: "Scan Receipt", sub: "Smart expense scanner", icon: ScanLine, color: "text-primary bg-primary-soft" },
   { to: "/add/expense", label: "Expense", sub: "Log something you spent", icon: TrendingDown, color: "text-coral bg-coral-soft" },
   { to: "/add/income", label: "Income", sub: "Extra income this cycle", icon: TrendingUp, color: "text-mint bg-mint-soft" },
   { to: "/add/salary", label: "Salary", sub: "Record your salary credit", icon: Landmark, color: "text-primary bg-primary-soft" },

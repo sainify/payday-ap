@@ -19,6 +19,7 @@ import * as recurring from "./routes/recurring";
 import * as emergency from "./routes/emergency";
 import * as debts from "./routes/debts";
 import * as notifications from "./routes/notifications";
+import * as receipts from "./routes/receipts";
 
 // Routes that don't require a logged-in session.
 const PUBLIC_PATHS = new Set(["/api/auth/register", "/api/auth/login"]);
@@ -147,6 +148,12 @@ export default {
       // ── Reminder center ───────────────────────────────────
       if (sub === "/notifications" && method === "GET") return await notifications.getReminderCenter(ctx);
       if (sub === "/notifications/preferences" && method === "PATCH") return await notifications.updateReminderPreferences(ctx);
+
+      // ── Receipt scanner / vault ────────────────────────────
+      if (sub === "/receipts" && method === "GET") return await receipts.listReceipts(ctx);
+      if (sub === "/receipts" && method === "POST") return await receipts.createReceipt(ctx);
+      if (segments[0] === "receipts" && segments[1] && method === "GET")
+        return await receipts.getReceipt(ctx, segments[1]);
 
       // ── Dashboard ─────────────────────────────────────────
       if (sub === "/dashboard" && method === "GET") return await dashboard.getDashboard(ctx);
