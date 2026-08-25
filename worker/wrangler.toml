@@ -10,4 +10,4 @@ COOKIE_DOMAIN = ""
 [[d1_databases]]
 binding = "DB"
 database_name = "payday-db"
-database_id = "00000016-00000000-000050c9-fb30491e1357a0df93e7ae42734ac385"
+database_id = "0000002c-00000000-000050d2-f8ea308755e142123136259e9aa965a9"
