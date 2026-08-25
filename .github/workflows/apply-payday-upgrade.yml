@@ -41,9 +41,9 @@ jobs:
           ROOT="$(find /tmp/payday-upgrade -mindepth 1 -maxdepth 1 -type d | head -1)"
 
           if [ -d "$ROOT/frontend" ] && [ -d "$ROOT/worker" ]; then
-            cp -a "$ROOT"/. .
-          elif [ -d "/tmp/payday-upgrade/frontend" ] && [ -d "/tmp/payday-upgrade/worker" ]; then
-            cp -a /tmp/payday-upgrade/. .
+            rm -rf ./frontend ./worker
+            cp -a "$ROOT/frontend" ./frontend
+            cp -a "$ROOT/worker" ./worker
           else
             echo "Could not find frontend and worker folders in ZIP"
             find /tmp/payday-upgrade -maxdepth 3 -type d
