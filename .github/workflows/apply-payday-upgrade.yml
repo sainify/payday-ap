@@ -1,4 +1,4 @@
-name: Apply PAYDAY Upgrade
+name: Apply PAYDAY AI Expense Scanner
 
 on:
   workflow_dispatch:
@@ -19,25 +19,36 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Check upgrade ZIP
         run: |
-          test -f PAYDAY-smart-finance-upgrade.zip || {
-            echo "PAYDAY-smart-finance-upgrade.zip not found"
+          test -f payday-ap-ai-expense-scanner-updated.zip || {
+            echo "payday-ap-ai-expense-scanner-updated.zip not found"
             exit 1
           }
+
+      - name: Inspect ZIP
+        run: |
+          unzip -l payday-ap-ai-expense-scanner-updated.zip | head -50
 
       - name: Extract upgrade
         run: |
           rm -rf /tmp/payday-upgrade
           mkdir -p /tmp/payday-upgrade
-          unzip -q PAYDAY-smart-finance-upgrade.zip -d /tmp/payday-upgrade
-          cp -a /tmp/payday-upgrade/PAYDAY-smart-finance-upgrade/. .
+          unzip -q payday-ap-ai-expense-scanner-updated.zip -d /tmp/payday-upgrade
 
-      - name: Remove generated verify workflow
-        run: |
-          rm -f .github/workflows/verify.yml
+          ROOT="$(find /tmp/payday-upgrade -mindepth 1 -maxdepth 1 -type d | head -1)"
+
+          if [ -d "$ROOT/frontend" ] && [ -d "$ROOT/worker" ]; then
+            cp -a "$ROOT"/. .
+          elif [ -d "/tmp/payday-upgrade/frontend" ] && [ -d "/tmp/payday-upgrade/worker" ]; then
+            cp -a /tmp/payday-upgrade/. .
+          else
+            echo "Could not find frontend and worker folders in ZIP"
+            find /tmp/payday-upgrade -maxdepth 3 -type d
+            exit 1
+          fi
 
       - name: Build frontend
         working-directory: frontend
@@ -57,13 +68,12 @@ jobs:
           rm -rf worker/node_modules worker/dist
           rm -f frontend/package-lock.json
           rm -f worker/package-lock.json
-          rm -f PAYDAY-smart-finance-upgrade.zip
-          rm -f .github/workflows/verify.yml
+          rm -f payday-ap-ai-expense-scanner-updated.zip
 
-      - name: Commit upgraded PAYDAY
+      - name: Commit PAYDAY AI Scanner
         run: |
           git config user.name "PAYDAY Upgrade Bot"
           git config user.email "actions@github.com"
           git add -A
-          git commit -m "Upgrade PAYDAY smart finance features"
+          git diff --cached --quiet || git commit -m "Add PAYDAY AI Expense Scanner"
           git push origin main
