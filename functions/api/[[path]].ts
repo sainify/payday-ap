@@ -1,16 +1,20 @@
 export async function onRequest(context: any) {
   const request: Request = context.request;
-  const url = new URL(request.url);
+  const incomingUrl = new URL(request.url);
 
-  const workerUrl =
-    "https://payday-ap.sainify.workers.dev/api" +
-    url.pathname.replace(/^\/api/, "") +
-    url.search;
+  const targetUrl =
+    "https://payday-ap.sainify.workers.dev" +
+    incomingUrl.pathname +
+    incomingUrl.search;
 
   const headers = new Headers(request.headers);
 
-  // Worker should see the PAYDAY production origin.
-  headers.set("Origin", "https://payday-ap.pages.dev");
+  headers.set(
+    "Origin",
+    "https://payday-ap.pages.dev"
+  );
+
+  headers.delete("host");
 
   const init: RequestInit = {
     method: request.method,
@@ -18,17 +22,27 @@ export async function onRequest(context: any) {
     redirect: "manual",
   };
 
-  if (request.method !== "GET" && request.method !== "HEAD") {
+  if (
+    request.method !== "GET" &&
+    request.method !== "HEAD"
+  ) {
     init.body = request.body;
   }
 
-  const upstream = await fetch(workerUrl, init);
+  const upstream = await fetch(
+    targetUrl,
+    init
+  );
 
-  const responseHeaders = new Headers(upstream.headers);
+  const responseHeaders =
+    new Headers(upstream.headers);
 
-  // Browser is now talking to the same Pages domain.
-  responseHeaders.delete("Access-Control-Allow-Origin");
-  responseHeaders.delete("Access-Control-Allow-Credentials");
+  responseHeaders.delete(
+    "Access-Control-Allow-Origin"
+  );
+  responseHeaders.delete(
+    "Access-Control-Allow-Credentials"
+  );
 
   return new Response(upstream.body, {
     status: upstream.status,
