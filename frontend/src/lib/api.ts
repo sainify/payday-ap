@@ -1,5 +1,4 @@
-const BASE =
-  "https://payday-ap.sainify.workers.dev/api";
+const BASE = "/api";
 
 export class ApiError extends Error {
   status: number;
@@ -32,7 +31,7 @@ async function request<T>(
         (body as { error?: string }).error ||
         message;
     } catch {
-      // ignore
+      // Response JSON nahi ho to default error use hoga
     }
 
     throw new ApiError(message, res.status);
@@ -62,7 +61,9 @@ async function download(path: string): Promise<Blob> {
 
 export const api = {
   get: <T>(path: string) =>
-    request<T>(path, { method: "GET" }),
+    request<T>(path, {
+      method: "GET",
+    }),
 
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, {
@@ -83,7 +84,9 @@ export const api = {
     }),
 
   del: <T>(path: string) =>
-    request<T>(path, { method: "DELETE" }),
+    request<T>(path, {
+      method: "DELETE",
+    }),
 
   download,
 };
