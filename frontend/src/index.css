@@ -3,48 +3,254 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
   html {
     -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+    background: #f7f6f2;
   }
+
   body {
-    @apply bg-clay-bg dark:bg-clay-bg-dark text-ink dark:text-ink-inverted font-body antialiased;
+    @apply text-ink font-body antialiased;
+    background:
+      radial-gradient(circle at top left, rgba(91, 92, 240, 0.06), transparent 28%),
+      radial-gradient(circle at bottom right, rgba(255, 181, 148, 0.10), transparent 30%),
+      #f7f6f2;
+    min-height: 100vh;
     overscroll-behavior-y: none;
   }
-  h1, h2, h3, h4 {
+
+  h1,
+  h2,
+  h3,
+  h4 {
     @apply font-display;
+    letter-spacing: -0.03em;
   }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
   ::selection {
-    @apply bg-primary/20;
+    background: rgba(79, 70, 229, 0.15);
   }
 }
 
 @layer components {
+  .app-shell {
+    @apply min-h-screen max-w-md mx-auto relative;
+    background: rgba(247, 246, 242, 0.96);
+  }
+
+  .page-section {
+    @apply px-5;
+  }
+
+  .premium-card,
   .clay-surface {
-    @apply bg-clay-surface dark:bg-clay-surface-dark rounded-clay shadow-clay-raised dark:shadow-clay-raised-dark transition-shadow duration-300 ease-clay;
+    @apply rounded-[28px] transition-all duration-300 ease-out;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(20, 20, 20, 0.055);
+    box-shadow:
+      0 18px 45px rgba(20, 20, 20, 0.055),
+      inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
+
+  .premium-card-sm,
   .clay-surface-sm {
-    @apply bg-clay-surface dark:bg-clay-surface-dark rounded-clay-sm shadow-clay-raised-sm dark:shadow-clay-raised-dark;
+    @apply rounded-[22px] transition-all duration-300 ease-out;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(20, 20, 20, 0.05);
+    box-shadow:
+      0 12px 28px rgba(20, 20, 20, 0.045),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
-  .clay-inset {
-    @apply bg-clay-bg dark:bg-clay-bg-dark rounded-clay-sm shadow-clay-inset dark:shadow-clay-inset-dark;
+
+  .clay-inset,
+  .premium-inset {
+    @apply rounded-[20px];
+    background: rgba(241, 241, 238, 0.88);
+    border: 1px solid rgba(15, 15, 15, 0.04);
+    box-shadow:
+      inset 0 1px 3px rgba(20, 20, 20, 0.035),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.85);
   }
-  .clay-pressable {
-    @apply active:shadow-clay-inset dark:active:shadow-clay-inset-dark active:scale-[0.98] transition-all duration-150 ease-clay;
+
+  .clay-pressable,
+  .premium-pressable {
+    @apply transition-all duration-150 ease-out;
   }
+
+  .clay-pressable:active,
+  .premium-pressable:active {
+    transform: scale(0.975);
+    opacity: 0.92;
+  }
+
+  .premium-button {
+    @apply rounded-[20px] font-semibold transition-all duration-200 ease-out;
+    min-height: 52px;
+    box-shadow:
+      0 10px 24px rgba(79, 70, 229, 0.18);
+  }
+
+  .premium-button:active {
+    transform: scale(0.98);
+  }
+
+  .premium-input {
+    @apply w-full rounded-[20px] px-4 outline-none transition-all duration-200;
+    min-height: 56px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(20, 20, 20, 0.07);
+    box-shadow:
+      inset 0 1px 2px rgba(20, 20, 20, 0.02),
+      0 6px 18px rgba(20, 20, 20, 0.025);
+  }
+
+  .premium-input:focus {
+    border-color: rgba(79, 70, 229, 0.38);
+    box-shadow:
+      0 0 0 4px rgba(79, 70, 229, 0.08),
+      0 8px 20px rgba(20, 20, 20, 0.03);
+  }
+
+  .section-label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-faint;
+  }
+
+  .muted-text {
+    @apply text-ink-faint;
+  }
+
+  .soft-divider {
+    height: 1px;
+    background: rgba(20, 20, 20, 0.06);
+  }
+
+  .icon-tile {
+    @apply h-11 w-11 rounded-[16px] flex items-center justify-center;
+    background: rgba(79, 70, 229, 0.08);
+    color: rgb(79, 70, 229);
+    border: 1px solid rgba(79, 70, 229, 0.05);
+  }
+
+  .floating-nav {
+    @apply rounded-[30px];
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(20, 20, 20, 0.055);
+    box-shadow:
+      0 18px 40px rgba(20, 20, 20, 0.10),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  .premium-sheet {
+    @apply rounded-t-[34px];
+    background: rgba(250, 249, 246, 0.98);
+    box-shadow: 0 -20px 50px rgba(20, 20, 20, 0.12);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+  }
+
   .tabular {
     font-variant-numeric: tabular-nums;
     @apply font-mono;
   }
+
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
   .safe-top {
     padding-top: env(safe-area-inset-top);
+  }
+
+  .hide-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    background: #151515;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at top left, rgba(99, 102, 241, 0.08), transparent 25%),
+      #151515;
+  }
+
+  .app-shell {
+    background: #151515;
+  }
+
+  .premium-card,
+  .clay-surface {
+    background: rgba(29, 29, 29, 0.88);
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow:
+      0 18px 45px rgba(0, 0, 0, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  }
+
+  .premium-card-sm,
+  .clay-surface-sm {
+    background: rgba(30, 30, 30, 0.84);
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .clay-inset,
+  .premium-inset {
+    background: rgba(22, 22, 22, 0.88);
+    border-color: rgba(255, 255, 255, 0.04);
+  }
+
+  .floating-nav {
+    background: rgba(26, 26, 26, 0.94);
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .premium-sheet {
+    background: rgba(24, 24, 24, 0.98);
+  }
+
+  .premium-input {
+    background: rgba(30, 30, 30, 0.95);
+    border-color: rgba(255, 255, 255, 0.07);
+  }
+
+  .soft-divider {
+    background: rgba(255, 255, 255, 0.07);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
