@@ -1,4 +1,5 @@
-const BASE = "/api";
+const BASE =
+  "https://payday-ap.sainify.workers.dev/api";
 
 export class ApiError extends Error {
   status: number;
