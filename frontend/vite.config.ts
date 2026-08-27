@@ -26,8 +26,8 @@ export default defineConfig({
         description:
           "Premium salary management app. Track income, expenses, bills, goals and know your safe-to-spend amount every day.",
 
-        theme_color: "#4B4FE0",
-        background_color: "#ECEFF4",
+        theme_color: "#0E4F45",
+        background_color: "#F3F6F3",
 
         display: "standalone",
         orientation: "portrait",

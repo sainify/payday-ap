@@ -7,49 +7,46 @@ export default {
     extend: {
       colors: {
         clay: {
-          bg: "#ECEFF4",
-          "bg-dark": "#12141B",
-          surface: "#F5F7FC",
-          "surface-dark": "#1B1F29",
-          raised: "#FAFBFE",
-          "raised-dark": "#222733",
+          bg: "#F3F6F3",
+          "bg-dark": "#0B1210",
+          surface: "#FFFFFF",
+          "surface-dark": "#141E1A",
+          raised: "#FFFFFF",
+          "raised-dark": "#1A2521",
         },
         ink: {
-          DEFAULT: "#1B1E27",
-          soft: "#5B6070",
-          faint: "#8A8FA3",
-          inverted: "#EDEFF5",
+          DEFAULT: "#122421",
+          soft: "#4B5C57",
+          faint: "#8A9C96",
+          inverted: "#EAF2EF",
         },
         primary: {
-          DEFAULT: "#4B4FE0",
-          soft: "#E4E4FB",
-          dark: "#3A3DBD",
+          DEFAULT: "#0E4F45",
+          soft: "#DEEAE6",
+          dark: "#0A3B33",
+          bright: "#1F8F73",
         },
-        mint: { DEFAULT: "#16A97C", soft: "#DCF4EB" },
-        coral: { DEFAULT: "#E1574F", soft: "#FBE4E2" },
-        amber: { DEFAULT: "#D6952E", soft: "#F8ECD8" },
+        brass: { DEFAULT: "#B8862E", soft: "#F3E7CE" },
+        mint: { DEFAULT: "#1B8F6B", soft: "#DCF0E6" },
+        coral: { DEFAULT: "#BD5236", soft: "#F5E2DA" },
+        amber: { DEFAULT: "#B8862E", soft: "#F3E7CE" },
       },
       fontFamily: {
-        display: ["Sora", "system-ui", "sans-serif"],
+        display: ["'Space Grotesk'", "system-ui", "sans-serif"],
         body: ["Inter", "system-ui", "sans-serif"],
-        mono: ["'JetBrains Mono'", "ui-monospace", "monospace"],
+        mono: ["'IBM Plex Mono'", "ui-monospace", "monospace"],
       },
       borderRadius: {
-        clay: "28px",
-        "clay-sm": "18px",
-        "clay-lg": "36px",
+        clay: "24px",
+        "clay-sm": "16px",
+        "clay-lg": "32px",
       },
       boxShadow: {
-        "clay-raised":
-          "8px 8px 20px rgba(163,170,192,0.45), -8px -8px 20px rgba(255,255,255,0.85)",
-        "clay-raised-sm":
-          "5px 5px 12px rgba(163,170,192,0.4), -5px -5px 12px rgba(255,255,255,0.8)",
-        "clay-inset":
-          "inset 4px 4px 10px rgba(163,170,192,0.4), inset -4px -4px 10px rgba(255,255,255,0.7)",
-        "clay-raised-dark":
-          "8px 8px 18px rgba(0,0,0,0.55), -6px -6px 16px rgba(255,255,255,0.03)",
-        "clay-inset-dark":
-          "inset 4px 4px 10px rgba(0,0,0,0.5), inset -3px -3px 8px rgba(255,255,255,0.03)",
+        "clay-raised": "0 16px 40px rgba(14,40,34,0.10), 0 2px 8px rgba(14,40,34,0.05)",
+        "clay-raised-sm": "0 10px 24px rgba(14,40,34,0.08)",
+        "clay-inset": "inset 0 1px 3px rgba(14,40,34,0.06)",
+        "clay-raised-dark": "0 16px 36px rgba(0,0,0,0.45)",
+        "clay-inset-dark": "inset 0 1px 3px rgba(0,0,0,0.4)",
       },
       transitionTimingFunction: {
         clay: "cubic-bezier(0.22, 1, 0.36, 1)",
