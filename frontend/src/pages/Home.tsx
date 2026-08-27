@@ -46,9 +46,7 @@ export default function Home() {
   }
 
   return (
-    <div className="pb-32">
-
-      {/* HEADER */}
+    <div className="pb-44">
       <TopBar
         title={`Hi, ${firstName}`}
         subtitle="Here's where things stand"
@@ -56,11 +54,9 @@ export default function Home() {
       />
 
       <div className="px-5 space-y-6">
-
-        {/* BALANCE HERO */}
+        {/* AVAILABLE BALANCE */}
         <section className="premium-card p-5">
           <div className="flex items-center gap-5">
-
             <ProgressRing
               progress={progress}
               size={105}
@@ -95,13 +91,11 @@ export default function Home() {
                 </span>
               </div>
             </div>
-
           </div>
         </section>
 
         {/* SAFE TO SPEND */}
         <section className="relative overflow-hidden rounded-[30px] bg-primary text-white p-6 shadow-[0_18px_40px_rgba(79,70,229,0.20)]">
-
           <div className="absolute -right-10 -top-12 h-36 w-36 rounded-full bg-white/10" />
 
           <div className="relative flex items-start justify-between">
@@ -129,22 +123,27 @@ export default function Home() {
               <span className="font-semibold text-white">
                 {data.forecast.rawPredictedEndBalance < 0
                   ? `-${formatINR(
-                      Math.abs(data.forecast.rawPredictedEndBalance)
+                      Math.abs(
+                        data.forecast.rawPredictedEndBalance
+                      )
                     )}`
-                  : formatINR(data.forecast.predictedEndBalance)}
+                  : formatINR(
+                      data.forecast.predictedEndBalance
+                    )}
               </span>
             </div>
           )}
-
         </section>
 
-        {/* SMART ALERTS */}
+        {/* SMART MONEY ALERT */}
         {(data?.smartAlerts?.length ?? 0) > 0 && (
           <section>
-
             <div className="flex items-center justify-between mb-3 px-1">
               <div className="flex items-center gap-2">
-                <Sparkles size={18} className="text-primary" />
+                <Sparkles
+                  size={18}
+                  className="text-primary"
+                />
 
                 <h2 className="font-display font-semibold text-[18px]">
                   Smart Money Alert
@@ -160,46 +159,47 @@ export default function Home() {
             </div>
 
             <div className="space-y-3">
-              {data?.smartAlerts?.slice(0, 2).map((a, i) => (
-                <div
-                  key={`${a.type}-${i}`}
-                  className="premium-card-sm p-4 flex gap-3"
-                >
+              {data?.smartAlerts
+                ?.slice(0, 2)
+                .map((a, i) => (
                   <div
-                    className={clsx(
-                      "h-10 w-10 rounded-[14px] flex items-center justify-center shrink-0",
-                      a.severity === "danger"
-                        ? "bg-coral-soft text-coral"
-                        : a.severity === "warning"
-                        ? "bg-amber-soft text-amber"
-                        : "bg-primary-soft text-primary"
-                    )}
+                    key={`${a.type}-${i}`}
+                    className="premium-card-sm p-4 flex gap-3"
                   >
-                    <AlertCircle size={18} />
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className="font-semibold text-sm">
-                      {a.title}
+                    <div
+                      className={clsx(
+                        "h-10 w-10 rounded-[14px] flex items-center justify-center shrink-0",
+                        a.severity === "danger"
+                          ? "bg-coral-soft text-coral"
+                          : a.severity === "warning"
+                            ? "bg-amber-soft text-amber"
+                            : "bg-primary-soft text-primary"
+                      )}
+                    >
+                      <AlertCircle size={18} />
                     </div>
 
-                    <div className="text-xs text-ink-faint mt-1 leading-relaxed">
-                      {a.message}
+                    <div className="min-w-0">
+                      <div className="font-semibold text-sm">
+                        {a.title}
+                      </div>
+
+                      <div className="text-xs text-ink-faint mt-1 leading-relaxed">
+                        {a.message}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
-
           </section>
         )}
 
         {/* SPENT / SAVED */}
         <section className="grid grid-cols-2 gap-3">
-
           <div className="premium-card p-4">
             <div className="flex items-center gap-2 text-coral">
               <TrendingDown size={17} />
+
               <span className="text-[10px] font-bold uppercase tracking-[0.12em]">
                 Spent
               </span>
@@ -237,12 +237,10 @@ export default function Home() {
               this salary cycle
             </div>
           </div>
-
         </section>
 
         {/* UPCOMING BILLS */}
         <section>
-
           <SectionHeader
             icon={<Receipt size={18} />}
             title="Upcoming Bills"
@@ -251,7 +249,6 @@ export default function Home() {
           />
 
           <div className="premium-card p-3">
-
             {loading && (
               <p className="text-sm text-ink-faint p-3">
                 Loading…
@@ -276,65 +273,63 @@ export default function Home() {
               )}
 
             <div>
-              {data?.upcomingBills?.slice(0, 4).map((bill, index) => (
-                <div
-                  key={bill.id}
-                  className={clsx(
-                    "flex items-center justify-between py-3 px-2",
-                    index !== 0 &&
-                      "border-t border-black/[0.05] dark:border-white/[0.05]"
-                  )}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-
-                    <div className="h-10 w-10 rounded-[14px] bg-amber-soft text-amber flex items-center justify-center shrink-0">
-                      <Receipt size={17} />
-                    </div>
-
-                    <div className="min-w-0">
-                      <div className="font-semibold text-sm truncate">
-                        {bill.title}
+              {data?.upcomingBills
+                ?.slice(0, 4)
+                .map((bill, index) => (
+                  <div
+                    key={bill.id}
+                    className={clsx(
+                      "flex items-center justify-between py-3 px-2",
+                      index !== 0 &&
+                        "border-t border-black/[0.05] dark:border-white/[0.05]"
+                    )}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-10 w-10 rounded-[14px] bg-amber-soft text-amber flex items-center justify-center shrink-0">
+                        <Receipt size={17} />
                       </div>
 
-                      <div className="text-[11px] text-ink-faint mt-0.5">
-                        Due{" "}
-                        {new Date(
-                          `${bill.due_date}T00:00:00`
-                        ).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                        })}
+                      <div className="min-w-0">
+                        <div className="font-semibold text-sm truncate">
+                          {bill.title}
+                        </div>
+
+                        <div className="text-[11px] text-ink-faint mt-0.5">
+                          Due{" "}
+                          {new Date(
+                            `${bill.due_date}T00:00:00`
+                          ).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                          })}
+                        </div>
                       </div>
                     </div>
 
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Amount
+                        value={bill.amount}
+                        size="sm"
+                      />
+
+                      <button
+                        onClick={() =>
+                          markPaid(bill.id)
+                        }
+                        aria-label="Mark as paid"
+                        className="h-8 w-8 rounded-full bg-mint-soft text-mint flex items-center justify-center active:scale-95 transition-transform"
+                      >
+                        <Check size={14} />
+                      </button>
+                    </div>
                   </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-
-                    <Amount
-                      value={bill.amount}
-                      size="sm"
-                    />
-
-                    <button
-                      onClick={() => markPaid(bill.id)}
-                      aria-label="Mark as paid"
-                      className="h-8 w-8 rounded-full bg-mint-soft text-mint flex items-center justify-center active:scale-95 transition-transform"
-                    >
-                      <Check size={14} />
-                    </button>
-
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
-
           </div>
         </section>
 
         {/* RECENT TRANSACTIONS */}
         <section>
-
           <SectionHeader
             icon={<TrendingUp size={18} />}
             title="Recent Transactions"
@@ -343,8 +338,8 @@ export default function Home() {
           />
 
           <div className="premium-card p-3">
-
-            {(data?.recentTransactions?.length ?? 0) === 0 ? (
+            {(data?.recentTransactions?.length ?? 0) ===
+            0 ? (
               <div className="text-center py-8">
                 <Receipt
                   size={25}
@@ -372,9 +367,7 @@ export default function Home() {
                           "border-t border-black/[0.05] dark:border-white/[0.05]"
                       )}
                     >
-
                       <div className="flex items-center gap-3 min-w-0">
-
                         <div
                           className={clsx(
                             "h-10 w-10 rounded-[14px] flex items-center justify-center shrink-0",
@@ -406,7 +399,6 @@ export default function Home() {
                             })}
                           </div>
                         </div>
-
                       </div>
 
                       <Amount
@@ -423,20 +415,16 @@ export default function Home() {
                             : "text-mint"
                         }
                       />
-
                     </div>
                   ))}
               </div>
             )}
-
           </div>
         </section>
 
         {/* SCANNER */}
         <section className="premium-card p-4">
-
           <div className="flex items-center gap-3">
-
             <div className="h-12 w-12 rounded-[17px] bg-primary text-white flex items-center justify-center shrink-0">
               <ScanLine size={21} />
             </div>
@@ -452,7 +440,6 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-2">
-
               <Link
                 to="/receipts"
                 aria-label="Receipt vault"
@@ -467,22 +454,17 @@ export default function Home() {
               >
                 Scan
               </Link>
-
             </div>
-
           </div>
-
         </section>
 
         {/* QUICK ACTIONS */}
         <section>
-
           <div className="section-label px-1 mb-3">
             Quick actions
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-
             <QuickCard
               to="/afford"
               title="Can I Afford It?"
@@ -494,20 +476,16 @@ export default function Home() {
               title="Salary Splitter"
               sub="Plan your salary"
             />
-
           </div>
-
         </section>
 
         {/* MONEY TOOLS */}
         <section>
-
           <div className="section-label px-1 mb-3">
             Money Tools
           </div>
 
           <div className="premium-card overflow-hidden">
-
             <ToolRow
               to="/budgets"
               icon={<Gauge size={18} />}
@@ -550,18 +528,12 @@ export default function Home() {
               sub="Bills and upcoming payments"
               last
             />
-
           </div>
-
         </section>
-
       </div>
     </div>
   );
 }
-
-
-/* ---------------- COMPONENTS ---------------- */
 
 function SectionHeader({
   icon,
@@ -576,7 +548,6 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center justify-between mb-3 px-1">
-
       <div className="flex items-center gap-2">
         <span className="text-primary">
           {icon}
@@ -594,11 +565,9 @@ function SectionHeader({
         {linkText}
         <ChevronRight size={14} />
       </Link>
-
     </div>
   );
 }
-
 
 function QuickCard({
   to,
@@ -615,7 +584,6 @@ function QuickCard({
       className="premium-card-sm premium-pressable p-4 block"
     >
       <div className="flex items-start justify-between">
-
         <div className="h-9 w-9 rounded-[13px] bg-primary-soft text-primary flex items-center justify-center">
           <Sparkles size={17} />
         </div>
@@ -624,7 +592,6 @@ function QuickCard({
           size={16}
           className="text-ink-faint"
         />
-
       </div>
 
       <div className="font-semibold text-sm mt-4">
@@ -637,7 +604,6 @@ function QuickCard({
     </Link>
   );
 }
-
 
 function ToolRow({
   to,
@@ -661,7 +627,6 @@ function ToolRow({
           "border-b border-black/[0.05] dark:border-white/[0.05]"
       )}
     >
-
       <div className="h-10 w-10 rounded-[14px] bg-primary-soft text-primary flex items-center justify-center shrink-0">
         {icon}
       </div>
@@ -680,7 +645,6 @@ function ToolRow({
         size={17}
         className="text-ink-faint"
       />
-
     </Link>
   );
 }
