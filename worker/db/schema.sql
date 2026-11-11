@@ -74,10 +74,12 @@ CREATE TABLE IF NOT EXISTS transactions (
   note TEXT,
   txn_date TEXT NOT NULL,
   wallet_id TEXT,
+  refund_of_id TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_txn_user_date ON transactions(user_id, txn_date DESC);
 CREATE INDEX IF NOT EXISTS idx_txn_user_type ON transactions(user_id, type);
+CREATE INDEX IF NOT EXISTS idx_txn_refund_parent ON transactions(user_id, refund_of_id);
 
 
 -- ── Wallets & internal transfers ────────────────────────────────
