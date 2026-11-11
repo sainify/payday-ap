@@ -235,3 +235,29 @@ export async function deleteTransaction(ctx: Ctx, id: string): Promise<Response>
 
   return json({ ok: true }, {}, ctx.origin);
 }
+
+
+export async function importTransactions(ctx: Ctx): Promise<Response> {
+  const body = await ctx.req.json<{rows?:Array<{type?:string;amount?:number;category_id?:string|null;note?:string|null;txn_date?:string;wallet_id?:string|null}>}>();
+  const rows = body.rows;
+  if (!Array.isArray(rows) || rows.length===0 || rows.length>500) return errorResponse("Upload between 1 and 500 transaction rows.",400,ctx.origin);
+  await ctx.env.DB.prepare("INSERT OR IGNORE INTO wallets (id,user_id,name,kind,opening_balance,currency) SELECT ?,id,'Main wallet','bank',0,currency FROM users WHERE id=?").bind(`wallet_default_${ctx.userId}`,ctx.userId).run();
+  const statements: D1PreparedStatement[] = [];
+  for (const row of rows) {
+    const amount=Number(row.amount);
+    if (!["expense","income"].includes(row.type||"") || !Number.isFinite(amount) || amount<=0 || !/^\d{4}-\d{2}-\d{2}$/.test(row.txn_date||"")) {
+      return errorResponse("One or more rows have an invalid type, amount or date. Nothing was imported.",400,ctx.origin);
+    }
+    const walletId=row.wallet_id || `wallet_default_${ctx.userId}`;
+    const wallet=await ctx.env.DB.prepare("SELECT id FROM wallets WHERE id=? AND user_id=? AND is_archived=0").bind(walletId,ctx.userId).first();
+    if(!wallet) return errorResponse("An imported row refers to an unknown wallet. Nothing was imported.",400,ctx.origin);
+    if(row.category_id){
+      const cat=await ctx.env.DB.prepare("SELECT id FROM categories WHERE id=? AND type=? AND (user_id IS NULL OR user_id=?)").bind(row.category_id,row.type,ctx.userId).first();
+      if(!cat) return errorResponse("An imported row has an invalid category. Nothing was imported.",400,ctx.origin);
+    }
+    statements.push(ctx.env.DB.prepare("INSERT INTO transactions (id,user_id,type,amount,category_id,note,txn_date,wallet_id) VALUES (?,?,?,?,?,?,?,?)")
+      .bind(crypto.randomUUID(),ctx.userId,row.type,amount,row.category_id||null,row.note?.slice(0,240)||null,row.txn_date,walletId));
+  }
+  for(let i=0;i<statements.length;i+=50) await ctx.env.DB.batch(statements.slice(i,i+50));
+  return json({ok:true,imported:statements.length},{status:201},ctx.origin);
+}
