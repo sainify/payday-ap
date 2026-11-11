@@ -8,8 +8,6 @@ on:
   push:
     branches:
       - main
-      - upgrade/fixed-salary-cycle-carry-forward
-      - upgrade/all-features-phase-1
     paths:
       - "frontend/**"
       - "worker/**"
