@@ -1,5 +1,4 @@
 from pathlib import Path
-import re
 
 app_dir = Path("flutter_app/android/app")
 app = app_dir / "build.gradle.kts"
@@ -20,22 +19,32 @@ else:
     raise SystemExit("compileSdk declaration not found")
 text = "\n".join(lines) + "\n"
 
+# Add desugaring switch using literal Gradle block matching.
 if kotlin:
     if "isCoreLibraryDesugaringEnabled = true" not in text:
-        text = re.sub(r"(compileOptions\\s*\\{)", r"\\1\\n        isCoreLibraryDesugaringEnabled = true", text, count=1)
-    if not re.search(r"coreLibraryDesugaring\\s*\\(", text):
-        text += '\n\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n'
+        if "compileOptions {" not in text:
+            raise SystemExit("compileOptions block not found")
+        text = text.replace("compileOptions {", "compileOptions {\n        isCoreLibraryDesugaringEnabled = true", 1)
+    if "coreLibraryDesugaring(" not in text:
+        dep = '\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n'
+        text += dep
 else:
     if "coreLibraryDesugaringEnabled true" not in text:
-        text = re.sub(r"(compileOptions\\s*\\{)", r"\\1\\n        coreLibraryDesugaringEnabled true", text, count=1)
-    if not re.search(r"coreLibraryDesugaring\\s+['\"]", text):
-        text += "\n\ndependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'\n}\n"
+        if "compileOptions {" not in text:
+            raise SystemExit("compileOptions block not found")
+        text = text.replace("compileOptions {", "compileOptions {\n        coreLibraryDesugaringEnabled true", 1)
+    if "coreLibraryDesugaring " not in text:
+        text += "\ndependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'\n}\n"
 
 if "desugar_jdk_libs:2.1.4" not in text:
-    raise SystemExit("Desugaring dependency insertion verification failed")
+    raise SystemExit("Desugaring library dependency was not added")
+if kotlin and "isCoreLibraryDesugaringEnabled = true" not in text:
+    raise SystemExit("Desugaring is not enabled in compileOptions")
+if not kotlin and "coreLibraryDesugaringEnabled true" not in text:
+    raise SystemExit("Desugaring is not enabled in compileOptions")
 app.write_text(text)
 
-# Patch cached Flutter Android plugins' compileSdk directly, avoiding Gradle lifecycle hooks.
+# Set compileSdk 36 on cached Android plugin projects (for example file_picker).
 cache = Path.home() / ".pub-cache" / "hosted" / "pub.dev"
 patched = 0
 if cache.exists():
@@ -48,12 +57,13 @@ if cache.exists():
         for line in src.splitlines():
             if line.strip().startswith("compileSdk"):
                 indent = line[:len(line) - len(line.lstrip())]
-                repl = indent + ("compileSdk = 36" if gradle.suffix == ".kts" else "compileSdk 36")
-                changed |= line != repl
-                line = repl
+                replacement = indent + ("compileSdk = 36" if gradle.suffix == ".kts" else "compileSdk 36")
+                changed = changed or line != replacement
+                line = replacement
             out.append(line)
         if changed:
             gradle.write_text("\n".join(out) + "\n")
             patched += 1
 
-print(f"Verified app compileSdk 36 + desugar_jdk_libs 2.1.4; patched {patched} plugin Gradle files.")
+print("Verified Android app compileSdk 36, coreLibraryDesugaring enabled, and desugar_jdk_libs 2.1.4.")
+print(f"Updated {patched} cached Flutter plugin Gradle files to compileSdk 36.")
