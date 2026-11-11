@@ -21,6 +21,7 @@ import * as debts from "./routes/debts";
 import * as notifications from "./routes/notifications";
 import * as receipts from "./routes/receipts";
 import * as wallets from "./routes/wallets";
+import * as transactionRules from "./routes/transactionRules";
 
 // Routes that don't require a logged-in session.
 const PUBLIC_PATHS = new Set([
@@ -282,6 +283,19 @@ export default {
       }
       if (sub === "/wallets/transfer" && method === "POST") {
         return await wallets.transfer(ctx);
+      }
+
+      // ─────────────────────────────────────────
+      // TRANSACTION RULES
+      // ─────────────────────────────────────────
+      if (sub === "/transaction-rules" && method === "GET") {
+        return await transactionRules.listRules(ctx);
+      }
+      if (sub === "/transaction-rules" && method === "POST") {
+        return await transactionRules.createRule(ctx);
+      }
+      if (segments[0] === "transaction-rules" && segments[1] && method === "DELETE") {
+        return await transactionRules.deleteRule(ctx, segments[1]);
       }
 
       // ─────────────────────────────────────────
