@@ -8,6 +8,7 @@ import { ClayInput } from "@/components/ui/ClayInput";
 import { Sheet } from "@/components/ui/Sheet";
 import { useApp } from "@/context/AppContext";
 import { api } from "@/lib/api";
+import { applyAccent,getAccent,type AccentName } from "@/lib/accent";
 
 export default function Profile(){
  const {user,settings,theme,setTheme,updateSettings,logout}=useApp();const navigate=useNavigate();
@@ -15,6 +16,7 @@ export default function Profile(){
  const [expectedDate,setExpectedDate]=useState(settings?.expected_salary_date||"");
  const [expectedAmount,setExpectedAmount]=useState(String(settings?.expected_salary_amount||""));
  const [openingBalance,setOpeningBalance]=useState(String(settings?.opening_balance||""));
+ const [accent,setAccent]=useState<AccentName>(getAccent());
  useEffect(()=>setExpectedDate(settings?.expected_salary_date||""),[settings?.expected_salary_date]);
  useEffect(()=>setExpectedAmount(String(settings?.expected_salary_amount||"")),[settings?.expected_salary_amount]);
  useEffect(()=>setOpeningBalance(String(settings?.opening_balance||"")),[settings?.opening_balance]);
@@ -43,6 +45,7 @@ export default function Profile(){
     <p className="text-xs text-ink-faint -mt-2">Expected salary is not counted as available money. Record each actual payment in Salary History; partial payments reduce the pending amount.</p>
    </ClayCard>
    <ClayCard><h3 className="font-display font-semibold mb-3">Appearance</h3><div className="grid grid-cols-3 gap-2">{[{key:"light" as const,icon:Sun,label:"Light"},{key:"dark" as const,icon:Moon,label:"Dark"},{key:"system" as const,icon:Smartphone,label:"System"}].map(opt=><button key={opt.key} onClick={()=>setTheme(opt.key)} className={`flex flex-col items-center gap-1.5 py-3 rounded-clay-sm text-xs font-semibold ${theme===opt.key?"bg-primary text-white shadow-clay-raised-sm":"clay-inset text-ink-soft"}`}><opt.icon size={18}/>{opt.label}</button>)}</div></ClayCard>
+   <ClayCard><h3 className="font-display font-semibold mb-3">Accent Theme</h3><p className="text-xs text-ink-faint mb-3">Change the app's highlight color without changing its layout or animations.</p><div className="grid grid-cols-5 gap-2">{([{id:"indigo",color:"#4B4FE0",label:"Indigo"},{id:"emerald",color:"#0F9F78",label:"Green"},{id:"rose",color:"#D94F78",label:"Rose"},{id:"amber",color:"#C88722",label:"Amber"},{id:"ocean",color:"#1686B8",label:"Ocean"}] as const).map(item=><button key={item.id} onClick={()=>{setAccent(item.id);applyAccent(item.id);}} className={`rounded-xl p-2 border ${accent===item.id?"border-primary bg-primary-soft":"border-transparent clay-inset"}`}><span className="mx-auto block h-7 w-7 rounded-full" style={{backgroundColor:item.color}}/><span className="block text-[10px] mt-1">{item.label}</span></button>)}</div></ClayCard>
    <ClayCard className="!p-2"><RowButton icon={<SlidersHorizontal size={18}/>} label="Salary Splitter Settings" onClick={()=>navigate("/splitter")}/><RowButton icon={<Bell size={18}/>} label="Reminder Center" onClick={()=>navigate("/reminders")}/><RowButton icon={<Lock size={18}/>} label={settings?.pin_enabled?"Change PIN Lock":"Set up PIN Lock"} onClick={()=>setPinSheetOpen(true)}/><RowButton icon={<Download size={18}/>} label="Export My Data" onClick={()=>setExportOpen(true)}/></ClayCard>
    <ClayButton variant="danger" fullWidth onClick={async()=>{await logout();navigate("/login");}}><span className="flex items-center justify-center gap-2"><LogOut size={18}/>Sign out</span></ClayButton>
   </div>
