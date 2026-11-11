@@ -55,5 +55,6 @@ jobs:
           ensure_column user_settings daily_expense_reminder_time "TEXT NOT NULL DEFAULT '20:00'"
           ensure_column transactions wallet_id "TEXT REFERENCES wallets(id) ON DELETE SET NULL"
           npx wrangler d1 execute payday-db --remote --yes --file=./db/migration-005-wallets.sql
+          npx wrangler d1 execute payday-db --remote --yes --file=./db/migration-006-transaction-rules.sql
       - name: Deploy PAYDAY Worker
         run: npx wrangler deploy
