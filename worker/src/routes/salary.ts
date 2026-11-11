@@ -26,5 +26,31 @@ export async function createSalary(ctx: Ctx): Promise<Response> {
     .bind(id, ctx.userId, amount, salary_date, note || null, walletId)
     .run();
 
+  const prefs = await ctx.env.DB.prepare("SELECT auto_allocate_enabled,split_savings,split_goals FROM user_settings WHERE user_id=?")
+    .bind(ctx.userId).first<{auto_allocate_enabled:number;split_savings:number;split_goals:number}>();
+  if (prefs?.auto_allocate_enabled) {
+    const savingsAmount = Math.round(amount * Number(prefs.split_savings || 0)) / 100;
+    const goalsAmount = Math.round(amount * Number(prefs.split_goals || 0)) / 100;
+    const allocations: D1PreparedStatement[] = [];
+    if (savingsAmount > 0) {
+      allocations.push(ctx.env.DB.prepare("INSERT INTO savings_entries (id,user_id,goal_id,amount,entry_date,note) VALUES (?,?,NULL,?,?,?)")
+        .bind(crypto.randomUUID(),ctx.userId,savingsAmount,salary_date,"Automatic salary savings allocation"));
+    }
+    if (goalsAmount > 0) {
+      const goal = await ctx.env.DB.prepare("SELECT id FROM goals WHERE user_id=? ORDER BY created_at ASC LIMIT 1")
+        .bind(ctx.userId).first<{id:string}>();
+      if (goal) {
+        allocations.push(ctx.env.DB.prepare("INSERT INTO savings_entries (id,user_id,goal_id,amount,entry_date,note) VALUES (?,?,?,?,?,?)")
+          .bind(crypto.randomUUID(),ctx.userId,goal.id,goalsAmount,salary_date,"Automatic salary goal allocation"));
+        allocations.push(ctx.env.DB.prepare("UPDATE goals SET saved_amount=saved_amount+? WHERE id=? AND user_id=?")
+          .bind(goalsAmount,goal.id,ctx.userId));
+      } else {
+        allocations.push(ctx.env.DB.prepare("INSERT INTO savings_entries (id,user_id,goal_id,amount,entry_date,note) VALUES (?,?,NULL,?,?,?)")
+          .bind(crypto.randomUUID(),ctx.userId,goalsAmount,salary_date,"Automatic salary goals allocation (unassigned)"));
+      }
+    }
+    if (allocations.length) await ctx.env.DB.batch(allocations);
+  }
+
   return json({ id, amount, salary_date, note }, { status: 201 }, ctx.origin);
 }
