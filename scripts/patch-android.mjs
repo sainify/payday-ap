@@ -124,6 +124,7 @@ const mainActivity = path.join(javaDir, "MainActivity.java");
 fs.writeFileSync(mainActivity, `package com.sainify.payday;
 
 import android.os.Bundle;
+import android.webkit.CookieManager;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -131,6 +132,9 @@ public class MainActivity extends BridgeActivity {
   public void onCreate(Bundle savedInstanceState) {
     registerPlugin(PaydayNativePlugin.class);
     super.onCreate(savedInstanceState);
+    CookieManager cookies = CookieManager.getInstance();
+    cookies.setAcceptCookie(true);
+    cookies.setAcceptThirdPartyCookies(getBridge().getWebView(), true);
   }
 }
 `);
