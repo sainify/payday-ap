@@ -31,3 +31,4 @@ FROM users u
 WHERE NOT EXISTS (SELECT 1 FROM wallets w WHERE w.user_id = u.id);
 UPDATE salary_entries SET wallet_id = 'wallet_default_' || user_id WHERE wallet_id IS NULL;
 UPDATE transactions SET wallet_id = 'wallet_default_' || user_id WHERE wallet_id IS NULL;
+UPDATE wallets SET opening_balance = COALESCE((SELECT opening_balance FROM user_settings WHERE user_settings.user_id=wallets.user_id),0) WHERE id = 'wallet_default_' || user_id;
