@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { api, ApiError } from "@/lib/api";
 import { User, UserSettings } from "@/types";
+import { initAccent } from "@/lib/accent";
 import { getPrivacyMode, setPrivacyMode as persistPrivacy, getTheme, setTheme as persistTheme, switchUserScope, clearUserScope, getQueue, clearQueueItem } from "@/lib/storage";
 
 interface AppContextValue {
@@ -60,6 +61,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     applyThemeClass(theme);
+    initAccent();
   }, [theme]);
 
   useEffect(() => {
