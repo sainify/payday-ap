@@ -20,6 +20,11 @@ export interface UserSettings {
   split_goals?: number;
   split_emergency?: number;
   notifications_enabled?: number;
+  expected_salary_date?: string | null;
+  expected_salary_amount?: number;
+  opening_balance?: number;
+  daily_expense_reminder_enabled?: number;
+  daily_expense_reminder_time?: string;
 }
 
 export interface Category {
@@ -182,6 +187,10 @@ export interface SalaryCycle {
 export interface DashboardSummary {
   cycle?: SalaryCycle | null;
   currentSalary?: number;
+  salaryReceivedThisCycle?: number;
+  expectedSalaryDate?: string | null;
+  expectedSalaryAmount?: number;
+  pendingSalaryAmount?: number;
   availableBalance?: number;
   safeToSpendToday?: number;
   spentThisCycle?: number;

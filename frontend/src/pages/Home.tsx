@@ -30,7 +30,7 @@ import { formatINR } from "@/lib/currency";
 import clsx from "clsx";
 
 export default function Home() {
-  const { user } = useApp();
+  const { user, settings } = useApp();
   const { data, loading, reload } = useDashboard();
 
   const firstName = user?.name?.split(" ")[0] || "there";
@@ -84,11 +84,22 @@ export default function Home() {
               />
 
               <div className="text-xs text-ink-faint mt-2">
-                Next salary in{" "}
+                Cycle ends in{" "}
                 <span className="text-ink dark:text-ink-inverted font-semibold">
                   {cycle?.daysRemaining ?? "–"}{" "}
                   day{cycle?.daysRemaining === 1 ? "" : "s"}
                 </span>
+                {settings?.expected_salary_date && (
+                  <div className="mt-1 text-[11px] text-ink-faint">
+                    Expected salary credit: {new Date(settings.expected_salary_date + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                  </div>
+                )}
+                {(data?.expectedSalaryAmount || data?.salaryReceivedThisCycle) ? (
+                  <div className="mt-1 text-[11px] text-ink-faint">
+                    Received this cycle: {formatINR(data?.salaryReceivedThisCycle ?? 0)}
+                    {data?.expectedSalaryAmount ? " • Pending: " + formatINR(data.pendingSalaryAmount ?? 0) : ""}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>

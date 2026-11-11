@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   currency TEXT NOT NULL DEFAULT 'INR',
-  salary_cycle_day INTEGER NOT NULL DEFAULT 1,
+  salary_cycle_day INTEGER NOT NULL DEFAULT 24,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -33,7 +33,12 @@ CREATE TABLE IF NOT EXISTS user_settings (
   split_lifestyle INTEGER NOT NULL DEFAULT 20,
   split_goals INTEGER NOT NULL DEFAULT 5,
   split_emergency INTEGER NOT NULL DEFAULT 5,
-  notifications_enabled INTEGER NOT NULL DEFAULT 1
+  notifications_enabled INTEGER NOT NULL DEFAULT 1,
+  expected_salary_date TEXT,
+  expected_salary_amount REAL NOT NULL DEFAULT 0,
+  opening_balance REAL NOT NULL DEFAULT 0,
+  daily_expense_reminder_enabled INTEGER NOT NULL DEFAULT 0,
+  daily_expense_reminder_time TEXT NOT NULL DEFAULT '20:00'
 );
 
 -- ── Categories (system defaults have user_id = NULL) ───────────
