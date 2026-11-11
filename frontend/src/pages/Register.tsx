@@ -10,7 +10,6 @@ export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [salaryDay, setSalaryDay] = useState("1");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const { refresh } = useApp();
@@ -25,7 +24,7 @@ export default function Register() {
         name,
         email,
         password,
-        salary_cycle_day: Number(salaryDay),
+        salary_cycle_day: 24,
       });
       await refresh();
       navigate("/", { replace: true });
@@ -65,15 +64,6 @@ export default function Register() {
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-          />
-          <ClayInput
-            label="Which day does your salary land? (1–31)"
-            type="number"
-            min={1}
-            max={31}
-            required
-            value={salaryDay}
-            onChange={(e) => setSalaryDay(e.target.value)}
           />
           {error && <p className="text-coral text-sm mb-4">{error}</p>}
           <ClayButton type="submit" fullWidth disabled={busy}>
