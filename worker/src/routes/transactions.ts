@@ -132,6 +132,14 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
     );
   }
 
+  let categoryId = body.category_id || null;
+  if (!categoryId && body.note?.trim()) {
+    const rule = await ctx.env.DB.prepare(
+      "SELECT category_id FROM transaction_rules WHERE user_id=? AND transaction_type=? AND is_enabled=1 AND LOWER(?) LIKE '%' || match_text || '%' ORDER BY priority ASC, created_at DESC LIMIT 1"
+    ).bind(ctx.userId, body.type, body.note.trim().toLowerCase()).first<{category_id:string}>();
+    if (rule) categoryId = rule.category_id;
+  }
+
   if (body.category_id) {
     const category = await ctx.env.DB.prepare(
       "SELECT id FROM categories WHERE id = ? AND type = ? AND (user_id IS NULL OR user_id = ?)"
@@ -159,7 +167,7 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
       ctx.userId,
       body.type,
       body.amount,
-      body.category_id || null,
+      categoryId,
       body.note || null,
       body.txn_date,
       walletId
