@@ -2,8 +2,8 @@ import { Ctx } from "../types";
 import { corsHeaders, errorResponse } from "../utils/response";
 
 const TABLES = [
-  "salary_entries", "transactions", "bills", "goals", "savings_entries", "lending_entries",
-  "budgets", "recurring_expenses", "emergency_funds", "debts", "reminder_preferences", "wallets", "wallet_transfers", "transaction_rules",
+  "categories", "wallets", "salary_entries", "transactions", "bills", "goals", "savings_entries", "lending_entries",
+  "budgets", "recurring_expenses", "emergency_funds", "debts", "reminder_preferences", "wallets", "wallet_transfers", "transaction_rules", "receipt_items",
 ] as const;
 
 export async function exportData(ctx: Ctx): Promise<Response> {
