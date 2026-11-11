@@ -65,6 +65,8 @@ export default {
       requestOrigin &&
       requestOrigin !== allowedOrigin &&
       requestOrigin !== "http://localhost:5173" &&
+      requestOrigin !== "https://localhost" &&
+      requestOrigin !== "capacitor://localhost" &&
       !isPaydayPagesOrigin
     ) {
       return errorResponse(
