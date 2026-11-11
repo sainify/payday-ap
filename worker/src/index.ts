@@ -30,6 +30,10 @@ const PUBLIC_PATHS = new Set([
 ]);
 
 export default {
+  async scheduled(_event: ScheduledController, env: Env, controller: ExecutionContext): Promise<void> {
+    controller.waitUntil(recurring.autoPostDue(env));
+  },
+
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const requestOrigin = request.headers.get("Origin");
