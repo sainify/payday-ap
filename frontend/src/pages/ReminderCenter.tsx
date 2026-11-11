@@ -30,6 +30,7 @@ export default function ReminderCenter(){
   try{
    await LocalNotifications.cancel({notifications:[{id:DAILY_EXPENSE_ID}]});
    if(!enabled)return;
+   if(!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(time))return;
    const parts=time.split(":").map(Number);
    await LocalNotifications.schedule({notifications:[{id:DAILY_EXPENSE_ID,title:"PAYDAY • Daily expense check",body:"Take a moment to record today's expenses and review your spending.",schedule:{on:{hour:parts[0],minute:parts[1]},repeats:true},sound:"default",extra:{source:"payday-daily-expense"}}]});
   }catch(error){console.error("Could not schedule daily reminder",error);setTestStatus(error instanceof Error?error.message:"Could not schedule daily reminder.");}
@@ -42,6 +43,7 @@ export default function ReminderCenter(){
  }
  async function toggle(field:"bills"|"budgets"|"subscriptions"|"debts",current:number){await mutate("/notifications/preferences","PATCH",{[field]:current?0:1});reload();}
  async function saveDailyReminder(enabled:boolean,time=dailyTime){
+  if(!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(time)){setTestStatus("Choose a valid reminder time.");return;}
   setDailyEnabled(enabled);setDailyTime(time);
   await updateSettings({daily_expense_reminder_enabled:enabled?1:0,daily_expense_reminder_time:time});
   if(isNative&&permission==="granted")await syncDailyReminder(enabled,time);
@@ -88,7 +90,7 @@ export default function ReminderCenter(){
     <div className="flex items-center gap-2 mb-2"><Clock size={18} className="text-primary"/><h3 className="font-display font-semibold">Daily expense reminder</h3></div>
     <p className="text-xs text-ink-faint mb-3">A gentle daily reminder to record your expenses. It is optional and can be changed anytime.</p>
     <button onClick={()=>void saveDailyReminder(!dailyEnabled)} className="w-full flex items-center justify-between py-3 border-b border-black/5 dark:border-white/5"><span className="text-sm font-medium">Remind me every day</span><span className={clsx("h-6 w-11 rounded-full p-0.5 transition-colors",dailyEnabled?"bg-primary":"clay-inset")}><span className={clsx("block h-5 w-5 rounded-full bg-white transition-transform shadow",dailyEnabled&&"translate-x-5")}/></span></button>
-    <div className="pt-3"><ClayInput label="Reminder time" type="time" value={dailyTime} onChange={e=>setDailyTime(e.target.value)} onBlur={()=>void saveDailyReminder(dailyEnabled,dailyTime)}/></div>
+    <div className="pt-3"><ClayInput label="Reminder time" type="time" required value={dailyTime} onChange={e=>setDailyTime(e.target.value)} onBlur={()=>void saveDailyReminder(dailyEnabled,dailyTime)}/></div>
     <p className="text-xs text-ink-faint -mt-2">Default: 8:00 PM. Your phone's local time is used.</p>
    </ClayCard>
    <ClayCard><h3 className="font-display font-semibold mb-3">Reminder types</h3>
