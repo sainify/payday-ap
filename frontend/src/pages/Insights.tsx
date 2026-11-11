@@ -44,6 +44,7 @@ export default function Insights() {
   const [growth, setGrowth] = useState<GrowthPoint[]>([]);
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [overview, setOverview] = useState<Overview | null>(null);
+  const [coach,setCoach]=useState<{score:number;alerts:Array<{title:string;detail:string}>;tips:string[];method:string}|null>(null);
 
   const [spendChart, setSpendChart] = useState<SpendChartMode>(() => {
     const saved = localStorage.getItem("payday_spend_chart");
@@ -64,6 +65,7 @@ export default function Insights() {
       .catch(() => {});
     api.get<Prediction>("/insights/prediction").then(setPrediction).catch(() => {});
     api.get<Overview>("/insights/overview").then(setOverview).catch(() => {});
+    api.get<{score:number;alerts:Array<{title:string;detail:string}>;tips:string[];method:string}>("/insights/coach").then(setCoach).catch(() => {});
   }, []);
 
   useEffect(() => localStorage.setItem("payday_spend_chart", spendChart), [spendChart]);
@@ -84,6 +86,16 @@ export default function Insights() {
           <QuickLink to="/calendar" icon={<CalendarDays size={18} />} label="Calendar" />
           <QuickLink to="/lending" icon={<HandCoins size={18} />} label="Lent/Borrow" />
         </div>
+
+        {coach && <ClayCard>
+          <div className="flex items-center justify-between gap-3">
+            <div><div className="text-xs text-ink-faint">PAYDAY Financial Health</div><div className="font-display text-3xl font-bold text-primary mt-1">{coach.score}<span className="text-sm text-ink-faint font-medium"> / 100</span></div></div>
+            <div className="h-14 w-14 rounded-full border-4 border-primary/20 flex items-center justify-center text-primary"><ShieldCheck size={25}/></div>
+          </div>
+          <div className="mt-4 space-y-2">{coach.alerts.map((a,i)=><div key={i} className="clay-inset rounded-clay-sm p-3"><div className="text-sm font-semibold">{a.title}</div><p className="text-xs text-ink-faint mt-1">{a.detail}</p></div>)}
+          {coach.tips.map((tip,i)=><p key={i} className="text-sm text-ink-soft flex gap-2"><span className="text-primary">•</span>{tip}</p>)}</div>
+          <p className="text-[10px] text-ink-faint mt-3">{coach.method}</p>
+        </ClayCard>}
 
         <div className="grid grid-cols-2 gap-4">
           <ClayCard className="!p-4">
