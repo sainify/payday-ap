@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS user_settings (
   expected_salary_amount REAL NOT NULL DEFAULT 0,
   opening_balance REAL NOT NULL DEFAULT 0,
   daily_expense_reminder_enabled INTEGER NOT NULL DEFAULT 0,
-  daily_expense_reminder_time TEXT NOT NULL DEFAULT '20:00'
+  daily_expense_reminder_time TEXT NOT NULL DEFAULT '20:00',
+  auto_allocate_enabled INTEGER NOT NULL DEFAULT 0
 );
 
 -- ── Categories (system defaults have user_id = NULL) ───────────
