@@ -16,7 +16,7 @@ export async function updateMe(ctx: Ctx): Promise<Response> {
   return json({ok:true},{},ctx.origin);
 }
 
-const SETTINGS_FIELDS=["theme","privacy_mode","pin_enabled","split_needs","split_savings","split_lifestyle","split_goals","split_emergency","notifications_enabled","expected_salary_date","daily_expense_reminder_enabled","daily_expense_reminder_time"];
+const SETTINGS_FIELDS=["theme","privacy_mode","pin_enabled","split_needs","split_savings","split_lifestyle","split_goals","split_emergency","notifications_enabled","expected_salary_date","expected_salary_amount","daily_expense_reminder_enabled","daily_expense_reminder_time"];
 export async function updateSettings(ctx: Ctx): Promise<Response> {
   const body=await ctx.req.json<Record<string,unknown>>();
   const updates:string[]=[]; const values:unknown[]=[];
@@ -24,6 +24,7 @@ export async function updateSettings(ctx: Ctx): Promise<Response> {
     if(!(field in body)) continue;
     const value=body[field];
     if(field==="expected_salary_date" && value!==null && (typeof value!=="string" || !/^\d{4}-\d{2}-\d{2}$/.test(value))) return errorResponse("Expected salary date must be a valid date.",400,ctx.origin);
+    if(field==="expected_salary_amount" && (typeof value!=="number" || !Number.isFinite(value) || value<0)) return errorResponse("Expected salary amount must be zero or greater.",400,ctx.origin);
     if(field==="daily_expense_reminder_enabled" && ![0,1,false,true].includes(value as never)) return errorResponse("Invalid reminder setting.",400,ctx.origin);
     if(field==="daily_expense_reminder_time" && (typeof value!=="string" || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value))) return errorResponse("Reminder time must use HH:MM.",400,ctx.origin);
     updates.push(`${field}=?`); values.push(value===true?1:value===false?0:value);
