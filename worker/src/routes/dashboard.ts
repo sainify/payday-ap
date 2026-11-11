@@ -31,12 +31,12 @@ export async function getDashboard(ctx: Ctx): Promise<Response> {
       .bind(ctx.userId,cycle.start,today).first<{total:number}>(),
     ctx.env.DB.prepare("SELECT COALESCE(SUM(amount),0) AS total FROM salary_entries WHERE user_id=? AND salary_date>=? AND salary_date<=?")
       .bind(ctx.userId,cycle.start,today).first<{total:number}>(),
-    ctx.env.DB.prepare("SELECT expected_salary_date,expected_salary_amount FROM user_settings WHERE user_id=?")
-      .bind(ctx.userId).first<{expected_salary_date:string|null;expected_salary_amount:number}>(),
+    ctx.env.DB.prepare("SELECT expected_salary_date,expected_salary_amount,opening_balance FROM user_settings WHERE user_id=?")
+      .bind(ctx.userId).first<{expected_salary_date:string|null;expected_salary_amount:number;opening_balance:number}>(),
   ]);
 
   // Lifetime net cash balance carries across salary-cycle boundaries. Only received salary entries count.
-  const availableBalance = Number(salaryTotal?.total||0) + Number(incomeTotal?.total||0)
+  const availableBalance = Number(expectedSalaryRow?.opening_balance||0) + Number(salaryTotal?.total||0) + Number(incomeTotal?.total||0)
     - Number(expenseTotal?.total||0) - Number(savingsTotal?.total||0);
 
   const [{results:upcomingBills},{results:recentTransactions},{results:budgetRows},recurringDue,debtsDue] = await Promise.all([
