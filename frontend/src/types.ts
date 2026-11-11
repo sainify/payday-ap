@@ -190,7 +190,6 @@ export interface DashboardSummary {
   expectedSalaryDate?: string | null;
   expectedSalaryAmount?: number;
   pendingSalaryAmount?: number;
-  salaryReceivedThisCycle?: number;
   availableBalance?: number;
   safeToSpendToday?: number;
   spentThisCycle?: number;
