@@ -7,20 +7,65 @@ const QUEUE_KEY = "payday:queue";
 const PRIVACY_KEY = "payday:privacy";
 const UNLOCKED_KEY = "payday:unlocked-at";
 const THEME_KEY = "payday:theme";
+const KEY_DB = "payday-secure-cache";
+const KEY_STORE = "crypto-keys";
+const KEY_ID = "device-cache-key";
 
-export function cacheSet<T>(key: string, value: T) {
+function openKeyDb(): Promise<IDBDatabase> {
+  return new Promise((resolve,reject)=>{
+    const request=indexedDB.open(KEY_DB,1);
+    request.onupgradeneeded=()=>request.result.createObjectStore(KEY_STORE);
+    request.onsuccess=()=>resolve(request.result);
+    request.onerror=()=>reject(request.error);
+  });
+}
+async function getDeviceKey(): Promise<CryptoKey> {
+  const db=await openKeyDb();
+  const existing=await new Promise<CryptoKey|undefined>((resolve,reject)=>{
+    const request=db.transaction(KEY_STORE,"readonly").objectStore(KEY_STORE).get(KEY_ID);
+    request.onsuccess=()=>resolve(request.result as CryptoKey|undefined);
+    request.onerror=()=>reject(request.error);
+  });
+  if(existing){db.close();return existing;}
+  const key=await crypto.subtle.generateKey({name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
+  await new Promise<void>((resolve,reject)=>{
+    const tx=db.transaction(KEY_STORE,"readwrite");
+    tx.objectStore(KEY_STORE).put(key,KEY_ID);
+    tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);
+  });
+  db.close();
+  return key;
+}
+
+/** Encrypt cached account data with a non-exportable device key before it reaches localStorage. */
+export async function cacheSet<T>(key: string, value: T) {
   try {
-    localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({ value, ts: Date.now() }));
+    const cryptoKey=await getDeviceKey();
+    const iv=crypto.getRandomValues(new Uint8Array(12));
+    const plain=new TextEncoder().encode(JSON.stringify({value,ts:Date.now()}));
+    const encrypted=await crypto.subtle.encrypt({name:"AES-GCM",iv},cryptoKey,plain);
+    const bytes=new Uint8Array(encrypted);
+    const payload=btoa(String.fromCharCode(...bytes));
+    localStorage.setItem(CACHE_PREFIX+key,JSON.stringify({v:1,iv:btoa(String.fromCharCode(...iv)),data:payload}));
   } catch {
-    /* storage full or unavailable */
+    /* Cache encryption/storage failure must not block online app use. */
   }
 }
 
-export function cacheGet<T>(key: string): T | null {
+export async function cacheGet<T>(key: string): Promise<T|null> {
   try {
-    const raw = localStorage.getItem(CACHE_PREFIX + key);
-    if (!raw) return null;
-    return (JSON.parse(raw) as { value: T }).value;
+    const raw=localStorage.getItem(CACHE_PREFIX+key);
+    if(!raw)return null;
+    const record=JSON.parse(raw) as {v?:number;iv?:string;data?:string;value?:T};
+    if(record.v!==1 || !record.iv || !record.data) {
+      // Remove old unencrypted cache rather than continue exposing financial records at rest.
+      localStorage.removeItem(CACHE_PREFIX+key);
+      return null;
+    }
+    const decode=(s:string)=>Uint8Array.from(atob(s),ch=>ch.charCodeAt(0));
+    const cryptoKey=await getDeviceKey();
+    const plain=await crypto.subtle.decrypt({name:"AES-GCM",iv:decode(record.iv)},cryptoKey,decode(record.data));
+    return (JSON.parse(new TextDecoder().decode(plain)) as {value:T}).value;
   } catch {
     return null;
   }
