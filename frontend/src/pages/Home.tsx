@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Wallet,
@@ -35,6 +35,10 @@ export default function Home() {
 
   const firstName = user?.name?.split(" ")[0] || "there";
   const cycle = data?.cycle;
+  const [widgetOrder,setWidgetOrder]=useState<string[]>(()=>{try{const saved=JSON.parse(localStorage.getItem("payday:dashboard-order")||"[]");return ["balance","safe","alerts","summary"].every(id=>saved.includes(id))?saved:["balance","safe","alerts","summary"];}catch{return ["balance","safe","alerts","summary"];}});
+  const [customizeOpen,setCustomizeOpen]=useState(false);
+  function moveWidget(index:number,direction:-1|1){const next=[...widgetOrder];const target=index+direction;if(target<0||target>=next.length)return;[next[index],next[target]]=[next[target],next[index]];setWidgetOrder(next);localStorage.setItem("payday:dashboard-order",JSON.stringify(next));}
+  const widgetLabels:Record<string,string>={balance:"Available balance",safe:"Safe to spend",alerts:"Smart money alerts",summary:"Spent & saved"};
 
   const progress = cycle
     ? cycle.cycleDay / Math.max(1, cycle.totalDays)
@@ -53,9 +57,9 @@ export default function Home() {
         showPrivacyToggle
       />
 
-      <div className="px-5 space-y-6">
+      <div className="px-5 flex flex-col gap-6 dashboard-widget-order">\n        <div className="flex justify-end" style={{order:0}}><button type="button" onClick={()=>setCustomizeOpen(v=>!v)} className="text-xs font-semibold text-primary px-3 py-2 rounded-full clay-surface-sm">{customizeOpen?"Done":"Customize dashboard"}</button></div>\n        {customizeOpen && <section className="premium-card p-4" style={{order:0}}><h3 className="font-display font-semibold mb-3">Reorder dashboard cards</h3><div className="space-y-2">{widgetOrder.map((id,index)=><div key={id} className="flex items-center justify-between clay-inset rounded-xl px-3 py-2"><span className="text-sm font-medium">{widgetLabels[id]}</span><div className="flex gap-2"><button type="button" disabled={index===0} onClick={()=>moveWidget(index,-1)} className="h-8 w-8 rounded-lg clay-surface-sm disabled:opacity-30" aria-label="Move up">↑</button><button type="button" disabled={index===widgetOrder.length-1} onClick={()=>moveWidget(index,1)} className="h-8 w-8 rounded-lg clay-surface-sm disabled:opacity-30" aria-label="Move down">↓</button></div></div>)}</div></section>}
         {/* AVAILABLE BALANCE */}
-        <section className="premium-card p-5">
+        <section data-dashboard-widget="balance" style={{order:widgetOrder.indexOf("balance")+1}} className="premium-card p-5">
           <div className="flex items-center gap-5">
             <ProgressRing
               progress={progress}
@@ -106,7 +110,7 @@ export default function Home() {
         </section>
 
         {/* SAFE TO SPEND */}
-        <section className="relative overflow-hidden rounded-[30px] bg-primary text-white p-6 shadow-[0_18px_40px_rgba(79,70,229,0.20)]">
+        <section data-dashboard-widget="safe" style={{order:widgetOrder.indexOf("safe")+1}} className="relative overflow-hidden rounded-[30px] bg-primary text-white p-6 shadow-[0_18px_40px_rgba(79,70,229,0.20)]">
           <div className="absolute -right-10 -top-12 h-36 w-36 rounded-full bg-white/10" />
 
           <div className="relative flex items-start justify-between">
@@ -206,7 +210,7 @@ export default function Home() {
         )}
 
         {/* SPENT / SAVED */}
-        <section className="grid grid-cols-2 gap-3">
+        <section data-dashboard-widget="summary" style={{order:widgetOrder.indexOf("summary")+1}} className="grid grid-cols-2 gap-3">
           <div className="premium-card p-4">
             <div className="flex items-center gap-2 text-coral">
               <TrendingDown size={17} />
