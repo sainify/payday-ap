@@ -33,7 +33,10 @@ CREATE TABLE IF NOT EXISTS user_settings (
   split_lifestyle INTEGER NOT NULL DEFAULT 20,
   split_goals INTEGER NOT NULL DEFAULT 5,
   split_emergency INTEGER NOT NULL DEFAULT 5,
-  notifications_enabled INTEGER NOT NULL DEFAULT 1
+  notifications_enabled INTEGER NOT NULL DEFAULT 1,
+  expected_salary_date TEXT,
+  daily_expense_reminder_enabled INTEGER NOT NULL DEFAULT 0,
+  daily_expense_reminder_time TEXT NOT NULL DEFAULT '20:00'
 );
 
 -- ── Categories (system defaults have user_id = NULL) ───────────
