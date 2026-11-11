@@ -49,8 +49,10 @@ public class PaydayNativePlugin extends Plugin {
 
   @PluginMethod
   public void updateWidget(PluginCall call) {
-    String balance = call.getString("balance", "Open PAYDAY");
-    String spent = call.getString("spent", "—");
+    String balance = call.getString("balance");
+    String spent = call.getString("spent");
+    if (balance == null) balance = "Open PAYDAY";
+    if (spent == null) spent = "—";
     SharedPreferences prefs = getContext().getSharedPreferences("payday_widget", Context.MODE_PRIVATE);
     prefs.edit().putString("balance", balance).putString("spent", spent).apply();
     AppWidgetManager manager = AppWidgetManager.getInstance(getContext());
