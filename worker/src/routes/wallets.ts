@@ -45,6 +45,15 @@ export async function transfer(ctx: Ctx): Promise<Response> {
   const rows = await ctx.env.DB.prepare("SELECT id FROM wallets WHERE user_id=? AND is_archived=0 AND id IN (?,?)")
     .bind(ctx.userId,body.from_wallet_id,body.to_wallet_id).all<{id:string}>();
   if (rows.results.length !== 2) return errorResponse("One or both wallets were not found.",404,ctx.origin);
+  const source = await ctx.env.DB.prepare(`
+    SELECT w.opening_balance
+      + COALESCE((SELECT SUM(CASE WHEN t.type='income' THEN t.amount ELSE -t.amount END)
+        FROM transactions t WHERE t.user_id=w.user_id AND t.wallet_id=w.id),0)
+      + COALESCE((SELECT SUM(amount) FROM wallet_transfers x WHERE x.user_id=w.user_id AND x.to_wallet_id=w.id),0)
+      - COALESCE((SELECT SUM(amount) FROM wallet_transfers x WHERE x.user_id=w.user_id AND x.from_wallet_id=w.id),0) AS balance
+    FROM wallets w WHERE w.id=? AND w.user_id=?
+  `).bind(body.from_wallet_id,ctx.userId).first<{balance:number}>();
+  if (!source || Number(source.balance) < amount) return errorResponse("Insufficient wallet balance for this transfer.",400,ctx.origin);
   const id = crypto.randomUUID();
   await ctx.env.DB.prepare("INSERT INTO wallet_transfers (id,user_id,from_wallet_id,to_wallet_id,amount,transfer_date,note) VALUES (?,?,?,?,?,?,?)")
     .bind(id,ctx.userId,body.from_wallet_id,body.to_wallet_id,amount,body.transfer_date,body.note?.trim() || null).run();
