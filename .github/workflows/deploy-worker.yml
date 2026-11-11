@@ -59,5 +59,6 @@ jobs:
           npx wrangler d1 execute payday-db --remote --yes --file=./db/migration-005-wallets.sql
           npx wrangler d1 execute payday-db --remote --yes --file=./db/migration-006-transaction-rules.sql
           npx wrangler d1 execute payday-db --remote --yes --file=./db/migration-007-refunds.sql
+          npx wrangler d1 execute payday-db --remote --yes --file=./db/migration-008-transaction-splits.sql
       - name: Deploy PAYDAY Worker
         run: npx wrangler deploy
