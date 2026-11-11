@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
   notifications_enabled INTEGER NOT NULL DEFAULT 1,
   expected_salary_date TEXT,
   expected_salary_amount REAL NOT NULL DEFAULT 0,
+  opening_balance REAL NOT NULL DEFAULT 0,
   daily_expense_reminder_enabled INTEGER NOT NULL DEFAULT 0,
   daily_expense_reminder_time TEXT NOT NULL DEFAULT '20:00'
 );
