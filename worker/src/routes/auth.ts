@@ -11,7 +11,7 @@ export async function register(ctx: Ctx): Promise<Response> {
   if (!name || !email || !password || password.length < 8) {
     return errorResponse("Name, email and an 8+ character password are required.", 400, ctx.origin);
   }
-  const cycleDay = Math.min(31, Math.max(1, Number(salary_cycle_day) || 1));
+  const cycleDay = 24;
 
   const existing = await ctx.env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email.toLowerCase()).first();
   if (existing) return errorResponse("An account with this email already exists.", 409, ctx.origin);
