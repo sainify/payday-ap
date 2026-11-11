@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS salary_entries (
   amount REAL NOT NULL,
   salary_date TEXT NOT NULL,
   note TEXT,
+  wallet_id TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_salary_user_date ON salary_entries(user_id, salary_date DESC);
@@ -91,6 +92,7 @@ CREATE TABLE IF NOT EXISTS wallets (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_wallets_user ON wallets(user_id, is_archived);
+CREATE INDEX IF NOT EXISTS idx_salary_wallet_date ON salary_entries(user_id, wallet_id, salary_date DESC);
 CREATE TABLE IF NOT EXISTS wallet_transfers (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
