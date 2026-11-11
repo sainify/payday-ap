@@ -3,7 +3,7 @@ import { corsHeaders, errorResponse } from "../utils/response";
 
 const TABLES = [
   "categories", "wallets", "salary_entries", "transactions", "bills", "goals", "savings_entries", "lending_entries",
-  "budgets", "recurring_expenses", "emergency_funds", "debts", "reminder_preferences", "receipts", "wallet_transfers", "transaction_rules", "transaction_splits", "transaction_splits", "user_settings",
+  "budgets", "recurring_expenses", "emergency_funds", "debts", "reminder_preferences", "receipts", "wallet_transfers", "transaction_rules", "transaction_splits", "user_settings",
 ] as const;
 
 export async function exportData(ctx: Ctx): Promise<Response> {
