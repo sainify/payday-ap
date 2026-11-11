@@ -28,7 +28,9 @@ export default function AddEntry() {
   const [busy, setBusy] = useState(false);
   const [wallets, setWallets] = useState<Array<{id:string;name:string}>>([]);
   const [walletId, setWalletId] = useState("");
-  useEffect(() => { if (type === "expense" || type === "income") { api.get<Array<{id:string;name:string}>>("/wallets").then(rows => { setWallets(rows); setWalletId(rows[0]?.id || ""); }).catch(() => setWallets([])); } }, [type]);
+  const [refundOfId, setRefundOfId] = useState("");
+  const [recentExpenses, setRecentExpenses] = useState<Array<{id:string;amount:number;note:string|null;txn_date:string}>>([]);
+  useEffect(() => { if (type === "expense" || type === "income") { api.get<Array<{id:string;name:string}>>("/wallets").then(rows => { setWallets(rows); setWalletId(rows[0]?.id || ""); }).catch(() => setWallets([])); } if (type === "income") { api.get<Array<{id:string;amount:number;note:string|null;txn_date:string}>>("/transactions?type=expense").then(setRecentExpenses).catch(() => setRecentExpenses([])); } }, [type]);
   const { data: categories } = useCategories(type === "expense" || type === "income" ? (type as "expense" | "income") : undefined);
 
   async function submit(e: React.FormEvent) {
@@ -43,6 +45,7 @@ export default function AddEntry() {
           note,
           txn_date: date,
           wallet_id: walletId || null,
+          refund_of_id: refundOfId || null,
         });
       } else if (type === "salary") {
         await api.post("/salary", { amount: Number(amount), salary_date: date, note });
@@ -82,6 +85,13 @@ export default function AddEntry() {
             {(type === "expense" || type === "income") && wallets.length > 0 && (
               <ClaySelect label="Wallet / Account" value={walletId} onChange={(e) => setWalletId(e.target.value)}>
                 {wallets.map((wallet) => <option key={wallet.id} value={wallet.id}>{wallet.name}</option>)}
+              </ClaySelect>
+            )}
+
+            {type === "income" && recentExpenses.length > 0 && (
+              <ClaySelect label="Refund for an existing expense (optional)" value={refundOfId} onChange={(e) => setRefundOfId(e.target.value)}>
+                <option value="">Not a refund</option>
+                {recentExpenses.map((item) => <option key={item.id} value={item.id}>{item.note || "Expense"} · ₹{item.amount} · {item.txn_date}</option>)}
               </ClaySelect>
             )}
 
