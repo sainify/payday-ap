@@ -656,6 +656,13 @@ export default {
         return await exportRoute.exportData(ctx);
       }
 
+      if (
+        sub === "/restore" &&
+        method === "POST"
+      ) {
+        return await exportRoute.restoreData(ctx);
+      }
+
       return errorResponse(
         "Not found.",
         404,
