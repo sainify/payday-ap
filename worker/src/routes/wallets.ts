@@ -8,7 +8,8 @@ export async function listWallets(ctx: Ctx): Promise<Response> {
   const { results } = await ctx.env.DB.prepare(`
     SELECT w.*,
       w.opening_balance
-        + COALESCE((SELECT SUM(CASE WHEN t.type='income' THEN t.amount ELSE -t.amount END)
+        + COALESCE((SELECT SUM(s.amount) FROM salary_entries s WHERE s.user_id=w.user_id AND s.wallet_id=w.id),0)
+      + COALESCE((SELECT SUM(CASE WHEN t.type='income' THEN t.amount ELSE -t.amount END)
           FROM transactions t WHERE t.user_id=w.user_id AND t.wallet_id=w.id),0)
         + COALESCE((SELECT SUM(amount) FROM wallet_transfers x
           WHERE x.user_id=w.user_id AND x.to_wallet_id=w.id),0)
@@ -47,6 +48,7 @@ export async function transfer(ctx: Ctx): Promise<Response> {
   if (rows.results.length !== 2) return errorResponse("One or both wallets were not found.",404,ctx.origin);
   const source = await ctx.env.DB.prepare(`
     SELECT w.opening_balance
+      + COALESCE((SELECT SUM(s.amount) FROM salary_entries s WHERE s.user_id=w.user_id AND s.wallet_id=w.id),0)
       + COALESCE((SELECT SUM(CASE WHEN t.type='income' THEN t.amount ELSE -t.amount END)
         FROM transactions t WHERE t.user_id=w.user_id AND t.wallet_id=w.id),0)
       + COALESCE((SELECT SUM(amount) FROM wallet_transfers x WHERE x.user_id=w.user_id AND x.to_wallet_id=w.id),0)
