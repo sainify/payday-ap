@@ -104,6 +104,19 @@ CREATE TABLE IF NOT EXISTS wallet_transfers (
 );
 CREATE INDEX IF NOT EXISTS idx_wallet_transfers_user_date ON wallet_transfers(user_id, transfer_date DESC);
 
+-- ── User-defined transaction categorization rules ──────────────
+CREATE TABLE IF NOT EXISTS transaction_rules (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  match_text TEXT NOT NULL,
+  category_id TEXT NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+  transaction_type TEXT NOT NULL CHECK (transaction_type IN ('expense','income')),
+  priority INTEGER NOT NULL DEFAULT 100,
+  is_enabled INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_transaction_rules_user_type ON transaction_rules(user_id, transaction_type, is_enabled, priority);
+
 -- ── Bills / EMIs ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS bills (
   id TEXT PRIMARY KEY,
