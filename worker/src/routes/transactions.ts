@@ -64,6 +64,7 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
     txn_date: string;
     wallet_id?: string | null;
     refund_of_id?: string | null;
+    splits?: Array<{category_id?:string|null;amount:number;note?:string|null}>;
   }>();
 
   if (!body.type || !["expense", "income"].includes(body.type)) {
@@ -163,6 +164,21 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
     }
   }
 
+  if (body.splits?.length) {
+    if (body.splits.length < 2 || body.splits.length > 20) return errorResponse("A split must contain 2 to 20 parts.",400,ctx.origin);
+    const splitTotal = body.splits.reduce((sum,part)=>sum+Number(part.amount),0);
+    if (body.splits.some(part=>!Number.isFinite(Number(part.amount)) || Number(part.amount)<=0) || Math.abs(splitTotal-body.amount)>0.01) {
+      return errorResponse("Split amounts must be positive and add up exactly to the transaction total.",400,ctx.origin);
+    }
+    for (const part of body.splits) {
+      if (part.category_id) {
+        const valid = await ctx.env.DB.prepare("SELECT id FROM categories WHERE id=? AND type=? AND (user_id IS NULL OR user_id=?)")
+          .bind(part.category_id,body.type,ctx.userId).first();
+        if (!valid) return errorResponse("One of the split categories is invalid.",400,ctx.origin);
+      }
+    }
+  }
+
   const id = crypto.randomUUID();
   const walletId = body.wallet_id || `wallet_default_${ctx.userId}`;
   await ctx.env.DB.prepare("INSERT OR IGNORE INTO wallets (id,user_id,name,kind,opening_balance,currency) SELECT ?,id,'Main wallet','bank',0,currency FROM users WHERE id=?").bind(`wallet_default_${ctx.userId}`,ctx.userId).run();
@@ -186,6 +202,13 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
       body.refund_of_id || null
     )
     .run();
+
+  if (body.splits?.length) {
+    const statements = body.splits.map(part => ctx.env.DB.prepare(
+      "INSERT INTO transaction_splits (id,user_id,transaction_id,category_id,amount,note) VALUES (?,?,?,?,?,?)"
+    ).bind(crypto.randomUUID(),ctx.userId,id,part.category_id || null,Number(part.amount),part.note || null));
+    await ctx.env.DB.batch(statements);
+  }
 
   return json(
     {
