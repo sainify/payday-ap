@@ -5,6 +5,7 @@ on:
     branches: [migration/flutter-native]
     paths:
       - 'flutter_app/**'
+      - 'scripts/enable-android-desugaring.py'
       - '.github/workflows/build-flutter-apk.yml'
 permissions:
   contents: read
@@ -29,6 +30,8 @@ jobs:
       - name: Generate Android platform
         working-directory: flutter_app
         run: flutter create --platforms=android --org com.sainify .
+      - name: Enable Android core library desugaring
+        run: python3 scripts/enable-android-desugaring.py
       - name: Build debug APK
         working-directory: flutter_app
         run: flutter build apk --debug --dart-define=PAYDAY_API_URL=https://payday-ap.pages.dev
