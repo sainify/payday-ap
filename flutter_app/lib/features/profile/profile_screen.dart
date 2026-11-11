@@ -1,0 +1,4 @@
+import 'package:flutter/material.dart';
+import '../../core/api_client.dart';
+import '../auth/auth_screen.dart';
+class ProfileScreen extends StatelessWidget{const ProfileScreen({super.key});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(20),children:[const Text('Profile & security',style:TextStyle(fontSize:26,fontWeight:FontWeight.w800)),const Card(child:ListTile(leading:Icon(Icons.lock_outline),title:Text('Secure session'),subtitle:Text('Session stored using Android secure storage.'))),const Card(child:ListTile(leading:Icon(Icons.fingerprint),title:Text('Biometric unlock'),subtitle:Text('Biometric integration remains to be implemented.'))),const SizedBox(height:16),FilledButton.icon(onPressed:()async{await ApiClient.instance.logout();if(context.mounted)Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder:(_)=>const AuthScreen()),(_)=>false);},icon:const Icon(Icons.logout),label:const Text('Sign out'))]);}
