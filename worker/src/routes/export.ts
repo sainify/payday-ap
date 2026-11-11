@@ -43,3 +43,55 @@ export async function exportData(ctx: Ctx): Promise<Response> {
 function csvCell(value: string): string {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;
 }
+
+
+export async function restoreData(ctx: Ctx): Promise<Response> {
+  const raw = await ctx.req.text();
+  if (raw.length > 3_000_000) return errorResponse("Backup is too large (maximum 3 MB).",413,ctx.origin);
+  let payload: Record<string, unknown>;
+  try { payload = JSON.parse(raw) as Record<string, unknown>; }
+  catch { return errorResponse("The selected backup is not valid JSON.",400,ctx.origin); }
+  const source = payload.data && typeof payload.data === "object"
+    ? payload.data as Record<string, unknown>
+    : payload;
+  const tables = [
+    "categories", "wallets", "goals", "transactions", "salary_entries",
+    "bills", "savings_entries", "lending_entries", "budgets",
+    "recurring_expenses", "emergency_funds", "debts", "reminder_preferences",
+    "receipts", "receipt_items", "wallet_transfers", "transaction_rules",
+  ] as const;
+  let restored = 0;
+  const statements: D1PreparedStatement[] = [];
+  for (const table of tables) {
+    const rows = source[table];
+    if (!Array.isArray(rows)) continue;
+    if (rows.length > 1000) return errorResponse(`Backup contains too many ${table} records.`,400,ctx.origin);
+    const info = await ctx.env.DB.prepare(`PRAGMA table_info(${table})`).all<{name:string}>();
+    const allowed = new Set(info.results.map(column => column.name));
+    if (!allowed.has("user_id")) continue;
+    for (const rawRow of rows) {
+      if (!rawRow || typeof rawRow !== "object" || Array.isArray(rawRow)) continue;
+      const row = rawRow as Record<string, unknown>;
+      if (table === "categories" && row.user_id == null) continue;
+      const keys = Object.keys(row).filter(key => allowed.has(key) && key !== "user_id");
+      if (!keys.includes("id") && table !== "user_settings") continue;
+      const columns = ["user_id", ...keys];
+      const values = [ctx.userId, ...keys.map(key => row[key])];
+      const placeholders = columns.map(() => "?").join(",");
+      statements.push(ctx.env.DB.prepare(
+        `INSERT OR IGNORE INTO ${table} (${columns.join(",")}) VALUES (${placeholders})`
+      ).bind(...values));
+      if (statements.length >= 50) {
+        await ctx.env.DB.batch(statements.splice(0,50));
+        restored += 50;
+      }
+    }
+  }
+  if (statements.length) {
+    await ctx.env.DB.batch(statements);
+    restored += statements.length;
+  }
+  return new Response(JSON.stringify({ok:true,restored,mode:"merge"}), {
+    headers: { "Content-Type":"application/json", ...corsHeaders(ctx.origin) }
+  });
+}
