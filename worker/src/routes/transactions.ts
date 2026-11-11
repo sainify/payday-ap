@@ -63,6 +63,7 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
     note?: string | null;
     txn_date: string;
     wallet_id?: string | null;
+    refund_of_id?: string | null;
   }>();
 
   if (!body.type || !["expense", "income"].includes(body.type)) {
@@ -132,6 +133,16 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
     );
   }
 
+  if (body.refund_of_id) {
+    if (body.type !== "income") return errorResponse("A refund must be recorded as income.",400,ctx.origin);
+    const original = await ctx.env.DB.prepare("SELECT id, amount FROM transactions WHERE id=? AND user_id=? AND type='expense'")
+      .bind(body.refund_of_id,ctx.userId).first<{id:string;amount:number}>();
+    if (!original) return errorResponse("Original expense not found.",404,ctx.origin);
+    const refunded = await ctx.env.DB.prepare("SELECT COALESCE(SUM(amount),0) AS total FROM transactions WHERE user_id=? AND refund_of_id=?")
+      .bind(ctx.userId,body.refund_of_id).first<{total:number}>();
+    if (Number(refunded?.total || 0) + body.amount > Number(original.amount) + 0.005) return errorResponse("Refund amount cannot exceed the remaining amount of the original expense.",400,ctx.origin);
+  }
+
   let categoryId = body.category_id || null;
   if (!categoryId && body.note?.trim()) {
     const rule = await ctx.env.DB.prepare(
@@ -161,7 +172,7 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
   if (!wallet) return errorResponse("Wallet not found. Please choose an active wallet.", 404, ctx.origin);
 
   await ctx.env.DB.prepare(
-    "INSERT INTO transactions (id, user_id, type, amount, category_id, note, txn_date, wallet_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO transactions (id, user_id, type, amount, category_id, note, txn_date, wallet_id, refund_of_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
   )
     .bind(
       id,
@@ -171,7 +182,8 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
       categoryId,
       body.note || null,
       body.txn_date,
-      walletId
+      walletId,
+      body.refund_of_id || null
     )
     .run();
 
@@ -184,6 +196,7 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
       note: body.note || null,
       txn_date: body.txn_date,
       wallet_id: walletId,
+      refund_of_id: body.refund_of_id || null,
     },
     { status: 201 },
     ctx.origin
