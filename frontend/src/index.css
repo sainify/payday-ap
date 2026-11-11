@@ -256,3 +256,12 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* User-selectable accent themes. Layout, typography and motion remain unchanged. */
+:root { --payday-primary: #4B4FE0; --payday-primary-soft: rgba(75,79,224,.10); }
+.bg-primary { background-color: var(--payday-primary) !important; }
+.text-primary { color: var(--payday-primary) !important; }
+.border-primary { border-color: var(--payday-primary) !important; }
+.accent-primary { accent-color: var(--payday-primary) !important; }
+.bg-primary-soft { background-color: var(--payday-primary-soft) !important; }
