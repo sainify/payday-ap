@@ -628,6 +628,13 @@ export default {
       }
 
       if (
+        sub === "/insights/coach" &&
+        method === "GET"
+      ) {
+        return await insights.coach(ctx);
+      }
+
+      if (
         sub === "/insights/can-i-afford" &&
         method === "POST"
       ) {
