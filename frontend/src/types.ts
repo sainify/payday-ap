@@ -25,6 +25,7 @@ export interface UserSettings {
   opening_balance?: number;
   daily_expense_reminder_enabled?: number;
   daily_expense_reminder_time?: string;
+  auto_allocate_enabled?: number;
 }
 
 export interface Category {
