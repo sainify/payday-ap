@@ -3,7 +3,7 @@ import { corsHeaders, errorResponse } from "../utils/response";
 
 const TABLES = [
   "categories", "wallets", "salary_entries", "transactions", "bills", "goals", "savings_entries", "lending_entries",
-  "budgets", "recurring_expenses", "emergency_funds", "debts", "reminder_preferences", "wallet_transfers", "transaction_rules", "transaction_splits", "transaction_splits", "user_settings",
+  "budgets", "recurring_expenses", "emergency_funds", "debts", "reminder_preferences", "receipts", "wallet_transfers", "transaction_rules", "transaction_splits", "transaction_splits", "user_settings",
 ] as const;
 
 export async function exportData(ctx: Ctx): Promise<Response> {
@@ -58,7 +58,7 @@ export async function restoreData(ctx: Ctx): Promise<Response> {
     "categories", "wallets", "goals", "transactions", "salary_entries",
     "bills", "savings_entries", "lending_entries", "budgets",
     "recurring_expenses", "emergency_funds", "debts", "reminder_preferences",
-    "receipts", "receipt_items", "user_settings", "wallet_transfers", "transaction_rules",
+    "receipts", "user_settings", "wallet_transfers", "transaction_rules",
   ] as const;
   let restored = 0;
   let processed = 0;
