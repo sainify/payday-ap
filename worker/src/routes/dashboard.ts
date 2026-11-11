@@ -79,7 +79,7 @@ export async function getDashboard(ctx: Ctx): Promise<Response> {
     expectedSalaryDate:expectedSalaryRow?.expected_salary_date||null,
     expectedSalaryAmount:Number(expectedSalaryRow?.expected_salary_amount||0),
     pendingSalaryAmount:Math.max(0,Number(expectedSalaryRow?.expected_salary_amount||0)-Number(salaryReceivedThisCycleRow?.total||0)),
-    upcomingBills,cycle,currentSalary:latestSalary?.amount||0,recentTransactions,
+    upcomingBills,cycle,currentSalary:Number(expectedSalaryRow?.expected_salary_amount||latestSalary?.amount||0),recentTransactions,
     smartAlerts:smartAlerts.slice(0,4),
     forecast:{predictedEndBalance:Math.max(0,forecastEndBalance),rawPredictedEndBalance:forecastEndBalance,avgDailySpend,knownFutureCommitments}
   },{},ctx.origin);
