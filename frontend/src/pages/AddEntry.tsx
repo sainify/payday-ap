@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { TopBar } from "@/components/layout/TopBar";
 import { ClayCard } from "@/components/ui/ClayCard";
@@ -26,6 +26,9 @@ export default function AddEntry() {
   const [recurrence, setRecurrence] = useState("monthly");
   const [targetDate, setTargetDate] = useState("");
   const [busy, setBusy] = useState(false);
+  const [wallets, setWallets] = useState<Array<{id:string;name:string}>>([]);
+  const [walletId, setWalletId] = useState("");
+  useEffect(() => { if (type === "expense" || type === "income") { api.get<Array<{id:string;name:string}>>("/wallets").then(rows => { setWallets(rows); setWalletId(rows[0]?.id || ""); }).catch(() => setWallets([])); } }, [type]);
   const { data: categories } = useCategories(type === "expense" || type === "income" ? (type as "expense" | "income") : undefined);
 
   async function submit(e: React.FormEvent) {
@@ -39,6 +42,7 @@ export default function AddEntry() {
           category_id: categoryId || null,
           note,
           txn_date: date,
+          wallet_id: walletId || null,
         });
       } else if (type === "salary") {
         await api.post("/salary", { amount: Number(amount), salary_date: date, note });
@@ -74,6 +78,12 @@ export default function AddEntry() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
+
+            {(type === "expense" || type === "income") && wallets.length > 0 && (
+              <ClaySelect label="Wallet / Account" value={walletId} onChange={(e) => setWalletId(e.target.value)}>
+                {wallets.map((wallet) => <option key={wallet.id} value={wallet.id}>{wallet.name}</option>)}
+              </ClaySelect>
+            )}
 
             {(type === "expense" || type === "income") && categories && categories.length > 0 && (
               <ClaySelect label="Category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
