@@ -33,6 +33,12 @@ export default function CalendarPage() {
     return map;
   }, [events]);
 
+  const spendByDay = useMemo(() => {
+    const totals: Record<string,number> = {};
+    for (const event of events) if (event.type === "expense") totals[event.date] = (totals[event.date] || 0) + Number(event.amount || 0);
+    return totals;
+  }, [events]);
+  const maxDailySpend = Math.max(1,...Object.values(spendByDay));
   const dotColor: Record<CalendarEventType, string> = {
     bill: "bg-amber", salary: "bg-mint", goal: "bg-primary", expense: "bg-coral", income: "bg-mint",
     recurring: "bg-amber", subscription: "bg-primary", debt: "bg-coral",
@@ -50,7 +56,7 @@ export default function CalendarPage() {
           </div>
           <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-ink-faint mb-2">{["S", "M", "T", "W", "T", "F", "S"].map((d, i) => <div key={i}>{d}</div>)}</div>
           <div className="grid grid-cols-7 gap-1">{days.map((day, i) => (
-            <button key={i} disabled={!day} onClick={() => day && setSelected(day)} className={clsx("aspect-square rounded-clay-sm flex flex-col items-center justify-center text-xs relative", !day && "invisible", day === selected && "bg-primary text-white font-semibold", day !== selected && day === toISODate(new Date()) && "clay-inset font-semibold")}>
+            <button key={i} disabled={!day} onClick={() => day && setSelected(day)} className={clsx("aspect-square rounded-clay-sm flex flex-col items-center justify-center text-xs relative transition-colors", !day && "invisible", day === selected && "bg-primary text-white font-semibold", day !== selected && day === toISODate(new Date()) && "clay-inset font-semibold")} style={day && day !== selected && spendByDay[day] ? {backgroundColor: `rgba(225,87,79,${0.08 + 0.28*(spendByDay[day]/maxDailySpend)})`} : undefined}>
               {day && Number(day.slice(-2))}
               {day && eventsByDay[day] && <div className="flex gap-0.5 mt-0.5">{eventsByDay[day].slice(0, 4).map((e) => <span key={e.id} className={clsx("h-1 w-1 rounded-full", day === selected ? "bg-white/80" : dotColor[e.type])} />)}</div>}
             </button>
@@ -58,7 +64,7 @@ export default function CalendarPage() {
         </ClayCard>
 
         <div className="flex flex-wrap gap-2 px-1 text-[10px] text-ink-faint">
-          <Legend dot="bg-coral" text="Expense / debt"/><Legend dot="bg-mint" text="Income / salary"/><Legend dot="bg-amber" text="Bill / recurring"/><Legend dot="bg-primary" text="Goal / subscription"/>
+          <Legend dot="bg-coral" text="Expense / debt"/><Legend dot="bg-mint" text="Income / salary"/><Legend dot="bg-amber" text="Bill / recurring"/><Legend dot="bg-primary" text="Goal / subscription"/><Legend dot="bg-coral" text="Darker day = higher spend"/>
         </div>
 
         <ClayCard>
