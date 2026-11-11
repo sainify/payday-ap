@@ -19,15 +19,13 @@ else:
     raise SystemExit("compileSdk declaration not found")
 text = "\n".join(lines) + "\n"
 
-# Add desugaring switch using literal Gradle block matching.
 if kotlin:
     if "isCoreLibraryDesugaringEnabled = true" not in text:
         if "compileOptions {" not in text:
             raise SystemExit("compileOptions block not found")
         text = text.replace("compileOptions {", "compileOptions {\n        isCoreLibraryDesugaringEnabled = true", 1)
     if "coreLibraryDesugaring(" not in text:
-        dep = '\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n'
-        text += dep
+        text += '\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n'
 else:
     if "coreLibraryDesugaringEnabled true" not in text:
         if "compileOptions {" not in text:
@@ -37,24 +35,19 @@ else:
         text += "\ndependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'\n}\n"
 
 if "desugar_jdk_libs:2.1.4" not in text:
-    raise SystemExit("Desugaring library dependency was not added")
-if kotlin and "isCoreLibraryDesugaringEnabled = true" not in text:
-    raise SystemExit("Desugaring is not enabled in compileOptions")
-if not kotlin and "coreLibraryDesugaringEnabled true" not in text:
-    raise SystemExit("Desugaring is not enabled in compileOptions")
+    raise SystemExit("Desugaring dependency was not inserted")
 app.write_text(text)
 
-# Set compileSdk 36 on cached Android plugin projects (for example file_picker).
 cache = Path.home() / ".pub-cache" / "hosted" / "pub.dev"
 patched = 0
 if cache.exists():
     for gradle in cache.glob("*/android/build.gradle*"):
         if not gradle.is_file():
             continue
-        src = gradle.read_text()
+        source = gradle.read_text()
         out = []
         changed = False
-        for line in src.splitlines():
+        for line in source.splitlines():
             if line.strip().startswith("compileSdk"):
                 indent = line[:len(line) - len(line.lstrip())]
                 replacement = indent + ("compileSdk = 36" if gradle.suffix == ".kts" else "compileSdk 36")
@@ -65,5 +58,5 @@ if cache.exists():
             gradle.write_text("\n".join(out) + "\n")
             patched += 1
 
-print("Verified Android app compileSdk 36, coreLibraryDesugaring enabled, and desugar_jdk_libs 2.1.4.")
-print(f"Updated {patched} cached Flutter plugin Gradle files to compileSdk 36.")
+print("Verified app compileSdk 36, core library desugaring and desugar_jdk_libs 2.1.4.")
+print(f"Updated {patched} cached plugin Gradle files.")
