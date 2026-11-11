@@ -82,6 +82,18 @@ CREATE INDEX IF NOT EXISTS idx_txn_user_type ON transactions(user_id, type);
 CREATE INDEX IF NOT EXISTS idx_txn_refund_parent ON transactions(user_id, refund_of_id);
 
 
+-- ── Transaction split details ───────────────────────────────────
+CREATE TABLE IF NOT EXISTS transaction_splits (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  transaction_id TEXT NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+  category_id TEXT REFERENCES categories(id) ON DELETE SET NULL,
+  amount REAL NOT NULL CHECK (amount > 0),
+  note TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_transaction_splits_parent ON transaction_splits(user_id, transaction_id);
+
 -- ── Wallets & internal transfers ────────────────────────────────
 CREATE TABLE IF NOT EXISTS wallets (
   id TEXT PRIMARY KEY,
