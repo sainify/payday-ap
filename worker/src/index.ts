@@ -20,6 +20,7 @@ import * as emergency from "./routes/emergency";
 import * as debts from "./routes/debts";
 import * as notifications from "./routes/notifications";
 import * as receipts from "./routes/receipts";
+import * as wallets from "./routes/wallets";
 
 // Routes that don't require a logged-in session.
 const PUBLIC_PATHS = new Set([
@@ -268,6 +269,19 @@ export default {
         method === "POST"
       ) {
         return await salary.createSalary(ctx);
+      }
+
+      // ─────────────────────────────────────────
+      // WALLETS
+      // ─────────────────────────────────────────
+      if (sub === "/wallets" && method === "GET") {
+        return await wallets.listWallets(ctx);
+      }
+      if (sub === "/wallets" && method === "POST") {
+        return await wallets.createWallet(ctx);
+      }
+      if (sub === "/wallets/transfer" && method === "POST") {
+        return await wallets.transfer(ctx);
       }
 
       // ─────────────────────────────────────────
