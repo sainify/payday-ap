@@ -185,6 +185,8 @@ export interface SalaryCycle {
 export interface DashboardSummary {
   cycle?: SalaryCycle | null;
   currentSalary?: number;
+  salaryReceivedThisCycle?: number;
+  expectedSalaryDate?: string | null;
   availableBalance?: number;
   safeToSpendToday?: number;
   spentThisCycle?: number;
