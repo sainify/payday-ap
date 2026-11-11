@@ -32,6 +32,7 @@ export async function createWallet(ctx: Ctx): Promise<Response> {
   if (!Number.isFinite(opening) || opening < 0) return errorResponse("Opening balance must be zero or more.",400,ctx.origin);
   const id = crypto.randomUUID();
   const user = await ctx.env.DB.prepare("SELECT currency FROM users WHERE id=?").bind(ctx.userId).first<{currency:string}>();
+  const settings = await ctx.env.DB.prepare("SELECT opening_balance FROM user_settings WHERE user_id=?").bind(ctx.userId).first<{opening_balance:number}>();
   await ctx.env.DB.prepare("INSERT INTO wallets (id,user_id,name,kind,opening_balance,currency) VALUES (?,?,?,?,?,?)")
     .bind(id,ctx.userId,name,kind,opening,user?.currency || "INR").run();
   return json({id,name,kind,opening_balance:opening,balance:opening}, {status:201}, ctx.origin);
@@ -66,6 +67,7 @@ async function ensureDefaultWallet(ctx: Ctx): Promise<void> {
   const user = await ctx.env.DB.prepare("SELECT currency FROM users WHERE id=?").bind(ctx.userId).first<{currency:string}>();
   await ctx.env.DB.prepare(`
     INSERT OR IGNORE INTO wallets (id,user_id,name,kind,opening_balance,currency)
-    VALUES (?,?, 'Main wallet','bank',0,?)
-  `).bind(`wallet_default_${ctx.userId}`,ctx.userId,user?.currency || "INR").run();
+    VALUES (?,?, 'Main wallet','bank',?,?)
+  `).bind(`wallet_default_${ctx.userId}`,ctx.userId,settings?.opening_balance || 0,user?.currency || "INR").run();
+  await ctx.env.DB.prepare("UPDATE wallets SET opening_balance=? WHERE id=? AND user_id=?").bind(settings?.opening_balance || 0,`wallet_default_${ctx.userId}`,ctx.userId).run();
 }
