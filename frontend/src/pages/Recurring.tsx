@@ -23,17 +23,19 @@ export default function Recurring() {
   const [frequency, setFrequency] = useState("monthly");
   const [date, setDate] = useState(toISODate(new Date()));
   const [isSubscription, setIsSubscription] = useState(false);
+  const [autoPost,setAutoPost]=useState(false);
   const [busy, setBusy] = useState(false);
 
   async function save(e: React.FormEvent) {
     e.preventDefault(); setBusy(true);
     try {
-      await mutate("/recurring", "POST", { title, amount: Number(amount), category_id: categoryId || null, frequency, next_due_date: date, is_subscription: isSubscription });
-      setTitle(""); setAmount(""); setCategoryId(""); setIsSubscription(false); setOpen(false); reload();
+      await mutate("/recurring", "POST", { title, amount: Number(amount), category_id: categoryId || null, frequency, next_due_date: date, is_subscription: isSubscription, auto_post_enabled:autoPost });
+      setTitle(""); setAmount(""); setCategoryId(""); setIsSubscription(false); setAutoPost(false); setOpen(false); reload();
     } finally { setBusy(false); }
   }
   async function logNow(id: string) { await mutate(`/recurring/${id}/log`, "POST"); reload(); }
   async function toggle(id: string, active: number) { await mutate(`/recurring/${id}`, "PATCH", { active: active ? 0 : 1 }); reload(); }
+  async function toggleAuto(id:string,enabled:number){await mutate(`/recurring/${id}`,"PATCH",{auto_post_enabled:enabled?0:1});reload();}
   async function remove(id: string) { await mutate(`/recurring/${id}`, "DELETE"); reload(); }
 
   return (
@@ -48,12 +50,12 @@ export default function Recurring() {
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <div className={clsx("h-11 w-11 rounded-clay-sm flex items-center justify-center", r.is_subscription ? "bg-primary-soft text-primary" : "bg-amber-soft text-amber")}>{r.is_subscription ? <CreditCard size={19}/> : <Repeat2 size={19}/>}</div>
-                <div className="min-w-0"><div className="font-semibold truncate">{r.title}</div><div className="text-xs text-ink-faint capitalize">{r.frequency} · next {new Date(`${r.next_due_date}T00:00:00`).toLocaleDateString("en-IN", { day:"numeric", month:"short" })}</div></div>
+                <div className="min-w-0"><div className="font-semibold truncate">{r.title}</div><div className="text-xs text-ink-faint capitalize">{r.frequency} · next {new Date(`${r.next_due_date}T00:00:00`).toLocaleDateString("en-IN", { day:"numeric", month:"short" })}</div><div className="text-[10px] text-primary mt-1">{r.auto_post_enabled?"Auto-post enabled":"Manual confirmation"}</div></div>
               </div>
               <Amount value={r.amount} size="sm" />
             </div>
-            <div className="grid grid-cols-3 gap-2 mt-4">
-              <button disabled={!r.active} onClick={() => logNow(r.id)} className="clay-inset py-2 rounded-clay-sm text-xs font-semibold text-mint flex items-center justify-center gap-1 disabled:opacity-40"><Check size={13}/> Log</button>
+            <div className="grid grid-cols-2 gap-2 mt-4"><button onClick={()=>toggleAuto(r.id,r.auto_post_enabled||0)} className="clay-inset py-2 rounded-clay-sm text-xs font-semibold text-primary">{r.auto_post_enabled?"Turn auto-post off":"Enable auto-post"}</button>
+              <button disabled={!r.active || !!r.auto_post_enabled} onClick={() => logNow(r.id)} className="clay-inset py-2 rounded-clay-sm text-xs font-semibold text-mint flex items-center justify-center gap-1 disabled:opacity-40"><Check size={13}/> Log</button>
               <button onClick={() => toggle(r.id, r.active)} className="clay-inset py-2 rounded-clay-sm text-xs font-semibold flex items-center justify-center gap-1">{r.active ? <Pause size={13}/> : <Play size={13}/>} {r.active ? "Pause" : "Resume"}</button>
               <button onClick={() => remove(r.id)} className="clay-inset py-2 rounded-clay-sm text-xs font-semibold text-coral flex items-center justify-center gap-1"><Trash2 size={13}/> Delete</button>
             </div>
@@ -68,7 +70,7 @@ export default function Recurring() {
           <ClaySelect label="Category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}><option value="">Uncategorised</option>{categories?.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}</ClaySelect>
           <ClaySelect label="Repeats" value={frequency} onChange={(e) => setFrequency(e.target.value)}><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></ClaySelect>
           <ClayInput label="Next due date" type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
-          <label className="flex items-center justify-between clay-inset px-4 py-3 mb-5 rounded-clay-sm"><span className="text-sm font-medium">This is a subscription</span><input type="checkbox" checked={isSubscription} onChange={(e) => setIsSubscription(e.target.checked)} className="h-5 w-5 accent-primary" /></label>
+          <label className="flex items-center justify-between clay-inset px-4 py-3 mb-3 rounded-clay-sm"><span className="text-sm font-medium">This is a subscription</span><input type="checkbox" checked={isSubscription} onChange={(e) => setIsSubscription(e.target.checked)} className="h-5 w-5 accent-primary" /></label><label className="flex items-center justify-between clay-inset px-4 py-3 mb-5 rounded-clay-sm"><span className="text-sm font-medium">Automatically post when due</span><input type="checkbox" checked={autoPost} onChange={e=>setAutoPost(e.target.checked)} className="h-5 w-5 accent-primary"/></label>
           <ClayButton type="submit" fullWidth disabled={busy}>{busy ? "Saving…" : "Save Recurring Item"}</ClayButton>
         </form>
       </Sheet>
