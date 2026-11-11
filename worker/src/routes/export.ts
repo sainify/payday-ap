@@ -58,9 +58,10 @@ export async function restoreData(ctx: Ctx): Promise<Response> {
     "categories", "wallets", "goals", "transactions", "salary_entries",
     "bills", "savings_entries", "lending_entries", "budgets",
     "recurring_expenses", "emergency_funds", "debts", "reminder_preferences",
-    "receipts", "receipt_items", "wallet_transfers", "transaction_rules",
+    "receipts", "receipt_items", "user_settings", "wallet_transfers", "transaction_rules",
   ] as const;
   let restored = 0;
+  let processed = 0;
   const statements: D1PreparedStatement[] = [];
   for (const table of tables) {
     const rows = source[table];
@@ -74,6 +75,9 @@ export async function restoreData(ctx: Ctx): Promise<Response> {
       const row = rawRow as Record<string, unknown>;
       if (table === "categories" && row.user_id == null) continue;
       const keys = Object.keys(row).filter(key => allowed.has(key) && key !== "user_id");
+      if (keys.some(key => row[key] !== null && !["string","number","boolean"].includes(typeof row[key]))) continue;
+      processed += 1;
+      if (processed > 5000) return errorResponse("Backup contains too many records (maximum 5,000).",400,ctx.origin);
       if (!keys.includes("id") && table !== "user_settings") continue;
       const columns = ["user_id", ...keys];
       const values = [ctx.userId, ...keys.map(key => row[key])];
