@@ -14,10 +14,13 @@ export default function Profile(){
  const [pinSheetOpen,setPinSheetOpen]=useState(false);const [exportOpen,setExportOpen]=useState(false);
  const [expectedDate,setExpectedDate]=useState(settings?.expected_salary_date||"");
  const [expectedAmount,setExpectedAmount]=useState(String(settings?.expected_salary_amount||""));
+ const [openingBalance,setOpeningBalance]=useState(String(settings?.opening_balance||""));
  useEffect(()=>setExpectedDate(settings?.expected_salary_date||""),[settings?.expected_salary_date]);
  useEffect(()=>setExpectedAmount(String(settings?.expected_salary_amount||"")),[settings?.expected_salary_amount]);
+ useEffect(()=>setOpeningBalance(String(settings?.opening_balance||"")),[settings?.opening_balance]);
  async function saveExpectedDate(){await updateSettings({expected_salary_date:expectedDate||null});}
  async function saveExpectedAmount(){const value=Number(expectedAmount);if(Number.isFinite(value)&&value>=0)await updateSettings({expected_salary_amount:value});}
+ async function saveOpeningBalance(){const value=Number(openingBalance);if(Number.isFinite(value)&&value>=0)await updateSettings({opening_balance:value});}
  async function exportData(format:"json"|"csv"){const blob=await api.download(`/export?format=${format}`);const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`payday-export.${format}`;a.click();URL.revokeObjectURL(url);setExportOpen(false);}
  return <div className="pb-28">
   <TopBar title="Profile" subtitle={user?.email}/>
@@ -32,7 +35,7 @@ export default function Profile(){
    </div></ClayCard>
    <ClayCard><div className="flex items-center gap-2 mb-2"><CalendarDays size={18} className="text-primary"/><h3 className="font-display font-semibold">Salary Cycle</h3></div>
     <div className="text-sm font-semibold">Fixed period: 24th – 23rd</div><p className="text-xs text-ink-faint mt-1">Every cycle starts on the 24th and ends on the 23rd. Salary credit date never changes this period.</p>
-    <div className="mt-4"><ClayInput label="Expected monthly salary amount" type="number" min="0" step="0.01" value={expectedAmount} onChange={e=>setExpectedAmount(e.target.value)} onBlur={saveExpectedAmount}/><ClayInput label="Expected salary credit date (this cycle)" type="date" value={expectedDate} onChange={e=>setExpectedDate(e.target.value)} onBlur={saveExpectedDate}/></div>
+    <div className="mt-4"><ClayInput label="Starting available balance (optional)" type="number" min="0" step="0.01" value={openingBalance} onChange={e=>setOpeningBalance(e.target.value)} onBlur={saveOpeningBalance}/><p className="text-xs text-ink-faint -mt-2 mb-3">Use this only for money you already had before tracking in PAYDAY. Leave it at zero if your earlier salary and expense history is already recorded.</p><ClayInput label="Expected monthly salary amount" type="number" min="0" step="0.01" value={expectedAmount} onChange={e=>setExpectedAmount(e.target.value)} onBlur={saveExpectedAmount}/><ClayInput label="Expected salary credit date (this cycle)" type="date" value={expectedDate} onChange={e=>setExpectedDate(e.target.value)} onBlur={saveExpectedDate}/></div>
     <p className="text-xs text-ink-faint -mt-2">Expected salary is not counted as available money. Record each actual payment in Salary History; partial payments reduce the pending amount.</p>
    </ClayCard>
    <ClayCard><h3 className="font-display font-semibold mb-3">Appearance</h3><div className="grid grid-cols-3 gap-2">{[{key:"light" as const,icon:Sun,label:"Light"},{key:"dark" as const,icon:Moon,label:"Dark"},{key:"system" as const,icon:Smartphone,label:"System"}].map(opt=><button key={opt.key} onClick={()=>setTheme(opt.key)} className={`flex flex-col items-center gap-1.5 py-3 rounded-clay-sm text-xs font-semibold ${theme===opt.key?"bg-primary text-white shadow-clay-raised-sm":"clay-inset text-ink-soft"}`}><opt.icon size={18}/>{opt.label}</button>)}</div></ClayCard>
