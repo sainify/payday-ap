@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Moon,Sun,Smartphone,Lock,Download,LogOut,ChevronRight,Target,History,SlidersHorizontal,Gauge,Repeat2,ShieldCheck,Landmark,Bell,CalendarDays,Wallet } from "lucide-react";
+import { Moon,Sun,Smartphone,Lock,Download,LogOut,ChevronRight,Target,History,SlidersHorizontal,Gauge,Repeat2,ShieldCheck,Landmark,Bell,CalendarDays,Wallet,WandSparkles } from "lucide-react";
 import { TopBar } from "@/components/layout/TopBar";
 import { ClayCard } from "@/components/ui/ClayCard";
 import { ClayButton } from "@/components/ui/ClayButton";
@@ -31,7 +31,7 @@ export default function Profile(){
     <Link to="/salary-history" className="clay-surface-sm clay-pressable p-4 flex items-center gap-3"><History size={18} className="text-primary"/><span className="text-sm font-semibold">Salary History</span></Link>
    </div>
    <ClayCard><h3 className="font-display font-semibold mb-3">Money Management</h3><div className="grid grid-cols-2 gap-3">
-    <MiniLink to="/wallets" icon={<Wallet size={17}/>} label="Wallets"/><MiniLink to="/budgets" icon={<Gauge size={17}/>} label="Budgets"/><MiniLink to="/recurring" icon={<Repeat2 size={17}/>} label="Recurring"/><MiniLink to="/emergency-fund" icon={<ShieldCheck size={17}/>} label="Emergency Fund"/><MiniLink to="/debts" icon={<Landmark size={17}/>} label="Debt & EMI"/>
+    <MiniLink to="/wallets" icon={<Wallet size={17}/>} label="Wallets"/><MiniLink to="/transaction-rules" icon={<WandSparkles size={17}/>} label="Smart Rules"/><MiniLink to="/budgets" icon={<Gauge size={17}/>} label="Budgets"/><MiniLink to="/recurring" icon={<Repeat2 size={17}/>} label="Recurring"/><MiniLink to="/emergency-fund" icon={<ShieldCheck size={17}/>} label="Emergency Fund"/><MiniLink to="/debts" icon={<Landmark size={17}/>} label="Debt & EMI"/>
    </div></ClayCard>
    <ClayCard><div className="flex items-center gap-2 mb-2"><CalendarDays size={18} className="text-primary"/><h3 className="font-display font-semibold">Salary Cycle</h3></div>
     <div className="text-sm font-semibold">Fixed period: 24th – 23rd</div><p className="text-xs text-ink-faint mt-1">Every cycle starts on the 24th and ends on the 23rd. Salary credit date never changes this period.</p>
