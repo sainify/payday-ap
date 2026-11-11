@@ -11,7 +11,7 @@ export async function exportData(ctx: Ctx): Promise<Response> {
   const data: Record<string, unknown[]> = {};
   const from = ctx.url.searchParams.get("from");
   const to = ctx.url.searchParams.get("to");
-  if ((from && !/^\\d{4}-\\d{2}-\\d{2}$/.test(from)) || (to && !/^\\d{4}-\\d{2}-\\d{2}$/.test(to)) || (from && to && from > to)) return errorResponse("Use a valid statement date range.",400,ctx.origin);
+  if ((from && !/^\d{4}-\d{2}-\d{2}$/.test(from)) || (to && !/^\\d{4}-\\d{2}-\\d{2}$/.test(to)) || (from && to && from > to)) return errorResponse("Use a valid statement date range.",400,ctx.origin);
 
   for (const table of TABLES) {
     let sql = `SELECT * FROM ${table} WHERE user_id = ?`;
