@@ -30,6 +30,8 @@ export default function AddEntry() {
   const [walletId, setWalletId] = useState("");
   const [refundOfId, setRefundOfId] = useState("");
   const [recentExpenses, setRecentExpenses] = useState<Array<{id:string;amount:number;note:string|null;txn_date:string}>>([]);
+  const [splitEnabled,setSplitEnabled]=useState(false);
+  const [splitParts,setSplitParts]=useState<Array<{category_id:string;amount:string;note:string}>>([{category_id:"",amount:"",note:""},{category_id:"",amount:"",note:""}]);
   useEffect(() => { if (type === "expense" || type === "income") { api.get<Array<{id:string;name:string}>>("/wallets").then(rows => { setWallets(rows); setWalletId(rows[0]?.id || ""); }).catch(() => setWallets([])); } if (type === "income") { api.get<Array<{id:string;amount:number;note:string|null;txn_date:string}>>("/transactions?type=expense").then(setRecentExpenses).catch(() => setRecentExpenses([])); } }, [type]);
   const { data: categories } = useCategories(type === "expense" || type === "income" ? (type as "expense" | "income") : undefined);
 
@@ -46,6 +48,7 @@ export default function AddEntry() {
           txn_date: date,
           wallet_id: walletId || null,
           refund_of_id: refundOfId || null,
+          splits: splitEnabled ? splitParts.map(p=>({category_id:p.category_id||null,amount:Number(p.amount),note:p.note||null})) : undefined,
         });
       } else if (type === "salary") {
         await api.post("/salary", { amount: Number(amount), salary_date: date, note });
@@ -104,6 +107,27 @@ export default function AddEntry() {
                   </option>
                 ))}
               </ClaySelect>
+            )}
+
+            {(type === "expense" || type === "income") && (
+              <div className="clay-inset rounded-clay-sm p-3 mb-4">
+                <label className="flex items-center justify-between text-sm font-semibold">
+                  <span>Split across categories</span>
+                  <input type="checkbox" checked={splitEnabled} onChange={e=>setSplitEnabled(e.target.checked)} className="h-5 w-5 accent-primary"/>
+                </label>
+                {splitEnabled && <div className="mt-3 space-y-3">
+                  <p className="text-xs text-ink-faint">Split amounts must add up to the full transaction amount.</p>
+                  {splitParts.map((part,index)=><div key={index} className="grid grid-cols-2 gap-2">
+                    <ClaySelect label={`Part ${index+1} category`} value={part.category_id} onChange={e=>setSplitParts(old=>old.map((p,i)=>i===index?{...p,category_id:e.target.value}:p))}>
+                      <option value="">Uncategorised</option>{(categories||[]).map(cat=><option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>)}
+                    </ClaySelect>
+                    <ClayInput label="Amount (₹)" type="number" min="0.01" step="0.01" required value={part.amount} onChange={e=>setSplitParts(old=>old.map((p,i)=>i===index?{...p,amount:e.target.value}:p))}/>
+                  </div>)}
+                  <div className="text-xs text-right text-ink-faint">Allocated: ₹{splitParts.reduce((s,p)=>s+(Number(p.amount)||0),0).toFixed(2)} / ₹{(Number(amount)||0).toFixed(2)}</div>
+                  <button type="button" className="text-xs text-primary font-semibold" onClick={()=>setSplitParts(old=>old.length>=20?old:[...old,{category_id:"",amount:"",note:""}])}>+ Add another split</button>
+                  <button type="button" className="text-xs text-ink-faint ml-4" onClick={()=>setSplitParts([{category_id:"",amount:"",note:""},{category_id:"",amount:"",note:""}])}>Reset splits</button>
+                </div>}
+              </div>
             )}
 
             {type === "bill" && (
