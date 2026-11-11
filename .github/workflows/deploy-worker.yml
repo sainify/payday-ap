@@ -34,23 +34,33 @@ jobs:
         run: npm install
       - name: Typecheck Worker
         run: npm run typecheck
-      - name: Apply missing additive D1 columns
+      - name: Apply additive D1 migrations
         run: |
           set -e
           ensure_column() {
-            COLUMN="$1"
-            DEFINITION="$2"
-            if ! npx wrangler d1 execute payday-db --remote --yes --command "PRAGMA table_info(user_settings)" | grep -q "$COLUMN"; then
-              echo "Adding user_settings.$COLUMN"
-              npx wrangler d1 execute payday-db --remote --yes --command "ALTER TABLE user_settings ADD COLUMN $COLUMN $DEFINITION"
+            TABLE="$1"
+            COLUMN="$2"
+            DEFINITION="$3"
+            if ! npx wrangler d1 execute payday-db --remote --yes --command "PRAGMA table_info($TABLE)" | grep -q "$COLUMN"; then
+              echo "Adding $TABLE.$COLUMN"
+              npx wrangler d1 execute payday-db --remote --yes --command "ALTER TABLE $TABLE ADD COLUMN $COLUMN $DEFINITION"
             else
-              echo "user_settings.$COLUMN already exists"
+              echo "$TABLE.$COLUMN already exists"
             fi
           }
-          ensure_column expected_salary_date "TEXT"
-          ensure_column expected_salary_amount "REAL NOT NULL DEFAULT 0"
-          ensure_column opening_balance "REAL NOT NULL DEFAULT 0"
-          ensure_column daily_expense_reminder_enabled "INTEGER NOT NULL DEFAULT 0"
-          ensure_column daily_expense_reminder_time "TEXT NOT NULL DEFAULT '20:00'"
+          ensure_column user_settings expected_salary_date "TEXT"
+          ensure_column user_settings expected_salary_amount "REAL NOT NULL DEFAULT 0"
+          ensure_column user_settings opening_balance "REAL NOT NULL DEFAULT 0"
+          ensure_column user_settings daily_expense_reminder_enabled "INTEGER NOT NULL DEFAULT 0"
+          ensure_column user_settings daily_expense_reminder_time "TEXT NOT NULL DEFAULT '20:00'"
+          ensure_column user_settings auto_allocate_enabled "INTEGER NOT NULL DEFAULT 0"
+          ensure_column recurring_expenses auto_post_enabled "INTEGER NOT NULL DEFAULT 0"
+          ensure_column salary_entries wallet_id "TEXT REFERENCES wallets(id) ON DELETE SET NULL"
+          ensure_column transactions wallet_id "TEXT REFERENCES wallets(id) ON DELETE SET NULL"
+          ensure_column transactions refund_of_id "TEXT REFERENCES transactions(id) ON DELETE SET NULL"
+          npx wrangler d1 execute payday-db --remote --yes --file=./db/migration-005-wallets.sql
+          npx wrangler d1 execute payday-db --remote --yes --file=./db/migration-006-transaction-rules.sql
+          npx wrangler d1 execute payday-db --remote --yes --file=./db/migration-007-refunds.sql
+          npx wrangler d1 execute payday-db --remote --yes --file=./db/migration-008-transaction-splits.sql
       - name: Deploy PAYDAY Worker
         run: npx wrangler deploy

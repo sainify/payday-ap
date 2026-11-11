@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS user_settings (
   expected_salary_amount REAL NOT NULL DEFAULT 0,
   opening_balance REAL NOT NULL DEFAULT 0,
   daily_expense_reminder_enabled INTEGER NOT NULL DEFAULT 0,
-  daily_expense_reminder_time TEXT NOT NULL DEFAULT '20:00'
+  daily_expense_reminder_time TEXT NOT NULL DEFAULT '20:00',
+  auto_allocate_enabled INTEGER NOT NULL DEFAULT 0
 );
 
 -- ── Categories (system defaults have user_id = NULL) ───────────
@@ -59,6 +60,7 @@ CREATE TABLE IF NOT EXISTS salary_entries (
   amount REAL NOT NULL,
   salary_date TEXT NOT NULL,
   note TEXT,
+  wallet_id TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_salary_user_date ON salary_entries(user_id, salary_date DESC);
@@ -72,10 +74,65 @@ CREATE TABLE IF NOT EXISTS transactions (
   category_id TEXT REFERENCES categories(id) ON DELETE SET NULL,
   note TEXT,
   txn_date TEXT NOT NULL,
+  wallet_id TEXT,
+  refund_of_id TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_txn_user_date ON transactions(user_id, txn_date DESC);
 CREATE INDEX IF NOT EXISTS idx_txn_user_type ON transactions(user_id, type);
+CREATE INDEX IF NOT EXISTS idx_txn_refund_parent ON transactions(user_id, refund_of_id);
+
+
+-- ── Transaction split details ───────────────────────────────────
+CREATE TABLE IF NOT EXISTS transaction_splits (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  transaction_id TEXT NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+  category_id TEXT REFERENCES categories(id) ON DELETE SET NULL,
+  amount REAL NOT NULL CHECK (amount > 0),
+  note TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_transaction_splits_parent ON transaction_splits(user_id, transaction_id);
+
+-- ── Wallets & internal transfers ────────────────────────────────
+CREATE TABLE IF NOT EXISTS wallets (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'cash' CHECK (kind IN ('cash','bank','upi','savings','other')),
+  opening_balance REAL NOT NULL DEFAULT 0,
+  currency TEXT NOT NULL DEFAULT 'INR',
+  is_archived INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_wallets_user ON wallets(user_id, is_archived);
+CREATE INDEX IF NOT EXISTS idx_salary_wallet_date ON salary_entries(user_id, wallet_id, salary_date DESC);
+CREATE TABLE IF NOT EXISTS wallet_transfers (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  from_wallet_id TEXT NOT NULL REFERENCES wallets(id),
+  to_wallet_id TEXT NOT NULL REFERENCES wallets(id),
+  amount REAL NOT NULL CHECK (amount > 0),
+  transfer_date TEXT NOT NULL,
+  note TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  CHECK (from_wallet_id <> to_wallet_id)
+);
+CREATE INDEX IF NOT EXISTS idx_wallet_transfers_user_date ON wallet_transfers(user_id, transfer_date DESC);
+
+-- ── User-defined transaction categorization rules ──────────────
+CREATE TABLE IF NOT EXISTS transaction_rules (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  match_text TEXT NOT NULL,
+  category_id TEXT NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+  transaction_type TEXT NOT NULL CHECK (transaction_type IN ('expense','income')),
+  priority INTEGER NOT NULL DEFAULT 100,
+  is_enabled INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_transaction_rules_user_type ON transaction_rules(user_id, transaction_type, is_enabled, priority);
 
 -- ── Bills / EMIs ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS bills (
@@ -176,6 +233,7 @@ CREATE TABLE IF NOT EXISTS recurring_expenses (
   is_subscription INTEGER NOT NULL DEFAULT 0,
   active INTEGER NOT NULL DEFAULT 1,
   note TEXT,
+  auto_post_enabled INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_recurring_user_due ON recurring_expenses(user_id, active, next_due_date);

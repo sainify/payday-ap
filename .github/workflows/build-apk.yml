@@ -8,7 +8,6 @@ on:
   push:
     branches:
       - main
-      - upgrade/fixed-salary-cycle-carry-forward
     paths:
       - "frontend/**"
       - "worker/**"
@@ -54,13 +53,14 @@ jobs:
         run: npm run build
       - name: Deploy the exact frontend that the APK opens
         if: github.ref == 'refs/heads/main'
-        continue-on-error: true
         run: npx wrangler pages deploy dist --project-name payday-ap --branch main
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: Create Android project
         run: npx cap add android
+      - name: Install PAYDAY native biometric and home-screen widget components
+        run: node ../scripts/patch-android.mjs
       - name: Sync Android plugins and assets
         run: npx cap sync android
       - name: Build debug APK

@@ -1,0 +1,4 @@
+-- PAYDAY migration 009: auto-allocation preference.
+-- Applied idempotently by .github/workflows/deploy-worker.yml using ensure_column:
+-- ALTER TABLE user_settings ADD COLUMN auto_allocate_enabled INTEGER NOT NULL DEFAULT 0;
+-- The deployment script checks for the column before adding it, so reruns are safe.

@@ -20,6 +20,8 @@ import * as emergency from "./routes/emergency";
 import * as debts from "./routes/debts";
 import * as notifications from "./routes/notifications";
 import * as receipts from "./routes/receipts";
+import * as wallets from "./routes/wallets";
+import * as transactionRules from "./routes/transactionRules";
 
 // Routes that don't require a logged-in session.
 const PUBLIC_PATHS = new Set([
@@ -28,6 +30,10 @@ const PUBLIC_PATHS = new Set([
 ]);
 
 export default {
+  async scheduled(_event: ScheduledController, env: Env, controller: ExecutionContext): Promise<void> {
+    controller.waitUntil(recurring.autoPostDue(env));
+  },
+
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const requestOrigin = request.headers.get("Origin");
@@ -242,6 +248,13 @@ export default {
       }
 
       if (
+        sub === "/transactions/import" &&
+        method === "POST"
+      ) {
+        return await transactions.importTransactions(ctx);
+      }
+
+      if (
         segments[0] === "transactions" &&
         segments[1] &&
         method === "DELETE"
@@ -268,6 +281,32 @@ export default {
         method === "POST"
       ) {
         return await salary.createSalary(ctx);
+      }
+
+      // ─────────────────────────────────────────
+      // WALLETS
+      // ─────────────────────────────────────────
+      if (sub === "/wallets" && method === "GET") {
+        return await wallets.listWallets(ctx);
+      }
+      if (sub === "/wallets" && method === "POST") {
+        return await wallets.createWallet(ctx);
+      }
+      if (sub === "/wallets/transfer" && method === "POST") {
+        return await wallets.transfer(ctx);
+      }
+
+      // ─────────────────────────────────────────
+      // TRANSACTION RULES
+      // ─────────────────────────────────────────
+      if (sub === "/transaction-rules" && method === "GET") {
+        return await transactionRules.listRules(ctx);
+      }
+      if (sub === "/transaction-rules" && method === "POST") {
+        return await transactionRules.createRule(ctx);
+      }
+      if (segments[0] === "transaction-rules" && segments[1] && method === "DELETE") {
+        return await transactionRules.deleteRule(ctx, segments[1]);
       }
 
       // ─────────────────────────────────────────
@@ -600,6 +639,13 @@ export default {
       }
 
       if (
+        sub === "/insights/coach" &&
+        method === "GET"
+      ) {
+        return await insights.coach(ctx);
+      }
+
+      if (
         sub === "/insights/can-i-afford" &&
         method === "POST"
       ) {
@@ -626,6 +672,13 @@ export default {
         method === "GET"
       ) {
         return await exportRoute.exportData(ctx);
+      }
+
+      if (
+        sub === "/restore" &&
+        method === "POST"
+      ) {
+        return await exportRoute.restoreData(ctx);
       }
 
       return errorResponse(

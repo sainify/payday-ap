@@ -38,12 +38,14 @@ export default function SalarySplitter() {
   );
 
   const salary = Number(dashboard?.currentSalary ?? 0);
+  const [autoAllocate,setAutoAllocate]=useState(!!settings?.auto_allocate_enabled);
+  useEffect(()=>setAutoAllocate(!!settings?.auto_allocate_enabled),[settings?.auto_allocate_enabled]);
 
   async function save() {
     setSaving(true);
 
     try {
-      await updateSettings(values as never);
+      await updateSettings({...values,auto_allocate_enabled:autoAllocate?1:0} as never);
     } finally {
       setSaving(false);
     }
@@ -122,6 +124,8 @@ export default function SalarySplitter() {
             />
           </ClayCard>
         ))}
+
+        <ClayCard className="!p-4"><label className="flex items-center justify-between gap-4"><div><div className="font-semibold text-sm">Automatically allocate actual salary</div><p className="text-xs text-ink-faint mt-1">When enabled, the Savings and Goals percentages are recorded as savings each time you add a real salary credit. Expected salary is never allocated.</p></div><input type="checkbox" checked={autoAllocate} onChange={e=>setAutoAllocate(e.target.checked)} className="h-5 w-5 accent-primary"/></label></ClayCard>
 
         <ClayButton
           fullWidth

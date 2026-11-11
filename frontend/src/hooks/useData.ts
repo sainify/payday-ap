@@ -20,7 +20,7 @@ import {
 } from "@/types";
 
 function useResource<T>(key: string, path: string, deps: unknown[] = []) {
-  const [data, setData] = useState<T | null>(() => cacheGet<T>(key));
+  const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,9 +30,9 @@ function useResource<T>(key: string, path: string, deps: unknown[] = []) {
     try {
       const res = await api.get<T>(path);
       setData(res);
-      cacheSet(key, res);
+      void cacheSet(key, res);
     } catch (e) {
-      const cached = cacheGet<T>(key);
+      const cached = await cacheGet<T>(key);
       if (cached) setData(cached);
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
