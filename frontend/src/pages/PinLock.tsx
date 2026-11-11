@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Delete } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { markUnlocked } from "@/lib/storage";
+import { BIOMETRIC_KEY,isNativePayday,PaydayNative } from "@/lib/native";
 
 interface PinLockProps {
   onUnlock: () => void;
@@ -11,6 +12,8 @@ export default function PinLock({ onUnlock }: PinLockProps) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
   const [checking, setChecking] = useState(false);
+
+  useEffect(()=>{if(!isNativePayday() || localStorage.getItem(BIOMETRIC_KEY)!=="1")return;let active=true;PaydayNative.authenticate().then(()=>{if(active){markUnlocked();onUnlock();}}).catch(()=>{});return()=>{active=false;};},[]);
 
   async function submit(nextPin: string) {
     setChecking(true);
