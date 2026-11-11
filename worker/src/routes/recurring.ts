@@ -87,34 +87,15 @@ export async function deleteRecurring(ctx: Ctx, id: string): Promise<Response> {
 }
 
 function nextDueDate(date: string, frequency: string): string {
-  const d = new Date(`${date}T00:00:00Z`);
-  if (frequency === "weekly") d.setUTCDate(d.getUTCDate() + 7);
-  else if (frequency === "yearly") d.setUTCFullYear(d.getUTCFullYear() + 1);
-  else d.setUTCMonth(d.getUTCMonth() + 1);
-  return d.toISOString().slice(0, 10);
-}
-
-
-/** Cron entry point: post only items the user explicitly opted into automatic posting. */
-export async function autoPostDue(env: { DB: D1Database }): Promise<void> {
-  const today = toISODate(new Date());
-  const { results } = await env.DB.prepare("SELECT * FROM recurring_expenses WHERE active=1 AND auto_post_enabled=1 AND next_due_date<=? ORDER BY next_due_date ASC")
-    .bind(today).all<{id:string;user_id:string;title:string;amount:number;category_id:string|null;frequency:string;next_due_date:string}>();
-  for (const item of results) {
-    const walletId=`wallet_default_${item.user_id}`;
-    await env.DB.prepare("INSERT OR IGNORE INTO wallets (id,user_id,name,kind,opening_balance,currency) SELECT ?,id,'Main wallet','bank',0,currency FROM users WHERE id=?")
-      .bind(walletId,item.user_id).run();
-    const statements: D1PreparedStatement[]=[];
-    let due=item.next_due_date;
-    let count=0;
-    while(due<=today && count<24) {
-      statements.push(env.DB.prepare("INSERT INTO transactions (id,user_id,type,amount,category_id,note,txn_date,wallet_id) VALUES (?,?,'expense',?,?,?,?,?)")
-        .bind(crypto.randomUUID(),item.user_id,item.amount,item.category_id,item.title,due,walletId));
-      due=nextDueDate(due,item.frequency);
-      count++;
-    }
-    statements.push(env.DB.prepare("UPDATE recurring_expenses SET next_due_date=? WHERE id=? AND user_id=?")
-      .bind(due,item.id,item.user_id));
-    await env.DB.batch(statements);
+  const [year,month,day]=date.split("-").map(Number);
+  if(frequency==="weekly") {
+    const d=new Date(Date.UTC(year,month-1,day+7));
+    return d.toISOString().slice(0,10);
   }
+  const targetYear=frequency==="yearly"?year+1:year;
+  const targetMonth=frequency==="yearly"?month:month+1;
+  const normalizedYear=targetMonth>12?targetYear+1:targetYear;
+  const normalizedMonth=targetMonth>12?1:targetMonth;
+  const lastDay=new Date(Date.UTC(normalizedYear,normalizedMonth,0)).getUTCDate();
+  return `${normalizedYear}-${String(normalizedMonth).padStart(2,"0")}-${String(Math.min(day,lastDay)).padStart(2,"0")}`;
 }
