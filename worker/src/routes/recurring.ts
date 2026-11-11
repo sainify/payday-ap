@@ -66,12 +66,14 @@ export async function logRecurring(ctx: Ctx, id: string): Promise<Response> {
   if (!item) return errorResponse("Recurring expense not found.", 404, ctx.origin);
 
   const txnId = crypto.randomUUID();
+  const walletId = `wallet_default_${ctx.userId}`;
+  await ctx.env.DB.prepare("INSERT OR IGNORE INTO wallets (id,user_id,name,kind,opening_balance,currency) SELECT ?,id,'Main wallet','bank',0,currency FROM users WHERE id=?").bind(walletId,ctx.userId).run();
   const txnDate = item.next_due_date <= toISODate(new Date()) ? item.next_due_date : toISODate(new Date());
   const next = nextDueDate(item.next_due_date, item.frequency);
   await ctx.env.DB.batch([
     ctx.env.DB.prepare(
-      "INSERT INTO transactions (id, user_id, type, amount, category_id, note, txn_date) VALUES (?, ?, 'expense', ?, ?, ?, ?)"
-    ).bind(txnId, ctx.userId, item.amount, item.category_id, item.title, txnDate),
+      "INSERT INTO transactions (id, user_id, type, amount, category_id, note, txn_date, wallet_id) VALUES (?, ?, 'expense', ?, ?, ?, ?, ?)"
+    ).bind(txnId, ctx.userId, item.amount, item.category_id, item.title, txnDate, walletId),
     ctx.env.DB.prepare("UPDATE recurring_expenses SET next_due_date = ? WHERE id = ? AND user_id = ?")
       .bind(next, id, ctx.userId),
   ]);
