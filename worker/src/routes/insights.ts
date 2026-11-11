@@ -9,9 +9,9 @@ export async function spendingBreakdown(ctx: Ctx): Promise<Response> {
   const cycle = getSalaryCycle(user?.salary_cycle_day || 1);
 
   const { results } = await ctx.env.DB.prepare(
-    `SELECT COALESCE(c.name, 'Uncategorised') AS category, SUM(t.amount) AS amount
+    `SELECT COALESCE(c.name, 'Uncategorised') AS category, SUM(CASE WHEN s.id IS NOT NULL THEN s.amount ELSE t.amount END) AS amount
      FROM transactions t
-     LEFT JOIN categories c ON c.id = t.category_id
+     LEFT JOIN transaction_splits s ON s.transaction_id=t.id AND s.user_id=t.user_id\n     LEFT JOIN categories c ON c.id = COALESCE(s.category_id,t.category_id)
      WHERE t.user_id = ? AND t.type = 'expense' AND t.txn_date >= ? AND t.txn_date <= ?
      GROUP BY category
      ORDER BY amount DESC`
