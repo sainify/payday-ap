@@ -14,7 +14,7 @@ export default function Profile(){
  const [pinSheetOpen,setPinSheetOpen]=useState(false);const [exportOpen,setExportOpen]=useState(false);
  const [expectedDate,setExpectedDate]=useState(settings?.expected_salary_date||"");
  useEffect(()=>setExpectedDate(settings?.expected_salary_date||""),[settings?.expected_salary_date]);
- async function saveExpectedDate(){await updateSettings({expected_salary_date:expectedDate||null} as never);}
+ async function saveExpectedDate(){await updateSettings({expected_salary_date:expectedDate||null});}
  async function exportData(format:"json"|"csv"){const blob=await api.download(`/export?format=${format}`);const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`payday-export.${format}`;a.click();URL.revokeObjectURL(url);setExportOpen(false);}
  return <div className="pb-28">
   <TopBar title="Profile" subtitle={user?.email}/>
