@@ -19,7 +19,7 @@ export async function listRecurring(ctx: Ctx): Promise<Response> {
 export async function createRecurring(ctx: Ctx): Promise<Response> {
   const body = await ctx.req.json<{
     title: string; amount: number; category_id?: string | null; frequency?: string;
-    next_due_date: string; is_subscription?: boolean | number; note?: string;
+    next_due_date: string; is_subscription?: boolean | number; note?: string; auto_post_enabled?: boolean | number;
   }>();
   if (!body.title?.trim()) return errorResponse("A title is required.", 400, ctx.origin);
   if (!body.amount || body.amount <= 0) return errorResponse("Amount must be greater than zero.", 400, ctx.origin);
@@ -36,11 +36,11 @@ export async function createRecurring(ctx: Ctx): Promise<Response> {
     id, ctx.userId, body.title.trim(), body.amount, body.category_id || null,
     frequency, body.next_due_date, body.is_subscription ? 1 : 0, body.note || null
   ).run();
-  return json({ id, ...body, frequency }, { status: 201 }, ctx.origin);
+  return json({ id, ...body, frequency, auto_post_enabled: body.auto_post_enabled ? 1 : 0 }, { status: 201 }, ctx.origin);
 }
 
 export async function updateRecurring(ctx: Ctx, id: string): Promise<Response> {
-  const body = await ctx.req.json<{ active?: boolean | number; amount?: number; next_due_date?: string }>();
+  const body = await ctx.req.json<{ active?: boolean | number; amount?: number; next_due_date?: string; auto_post_enabled?: boolean | number }>();
   const row = await ctx.env.DB.prepare("SELECT id FROM recurring_expenses WHERE id = ? AND user_id = ?")
     .bind(id, ctx.userId).first();
   if (!row) return errorResponse("Recurring expense not found.", 404, ctx.origin);
@@ -50,6 +50,7 @@ export async function updateRecurring(ctx: Ctx, id: string): Promise<Response> {
   if (body.active !== undefined) { updates.push("active = ?"); values.push(body.active ? 1 : 0); }
   if (body.amount !== undefined && body.amount > 0) { updates.push("amount = ?"); values.push(body.amount); }
   if (body.next_due_date) { updates.push("next_due_date = ?"); values.push(body.next_due_date); }
+  if (body.auto_post_enabled !== undefined) { updates.push("auto_post_enabled = ?"); values.push(body.auto_post_enabled ? 1 : 0); }
   if (!updates.length) return errorResponse("Nothing to update.", 400, ctx.origin);
   values.push(id, ctx.userId);
   await ctx.env.DB.prepare(`UPDATE recurring_expenses SET ${updates.join(", ")} WHERE id = ? AND user_id = ?`)
@@ -91,4 +92,29 @@ function nextDueDate(date: string, frequency: string): string {
   else if (frequency === "yearly") d.setUTCFullYear(d.getUTCFullYear() + 1);
   else d.setUTCMonth(d.getUTCMonth() + 1);
   return d.toISOString().slice(0, 10);
+}
+
+
+/** Cron entry point: post only items the user explicitly opted into automatic posting. */
+export async function autoPostDue(env: { DB: D1Database }): Promise<void> {
+  const today = toISODate(new Date());
+  const { results } = await env.DB.prepare("SELECT * FROM recurring_expenses WHERE active=1 AND auto_post_enabled=1 AND next_due_date<=? ORDER BY next_due_date ASC")
+    .bind(today).all<{id:string;user_id:string;title:string;amount:number;category_id:string|null;frequency:string;next_due_date:string}>();
+  for (const item of results) {
+    const walletId=`wallet_default_${item.user_id}`;
+    await env.DB.prepare("INSERT OR IGNORE INTO wallets (id,user_id,name,kind,opening_balance,currency) SELECT ?,id,'Main wallet','bank',0,currency FROM users WHERE id=?")
+      .bind(walletId,item.user_id).run();
+    const statements: D1PreparedStatement[]=[];
+    let due=item.next_due_date;
+    let count=0;
+    while(due<=today && count<24) {
+      statements.push(env.DB.prepare("INSERT INTO transactions (id,user_id,type,amount,category_id,note,txn_date,wallet_id) VALUES (?,?,'expense',?,?,?,?,?)")
+        .bind(crypto.randomUUID(),item.user_id,item.amount,item.category_id,item.title,due,walletId));
+      due=nextDueDate(due,item.frequency);
+      count++;
+    }
+    statements.push(env.DB.prepare("UPDATE recurring_expenses SET next_due_date=? WHERE id=? AND user_id=?")
+      .bind(due,item.id,item.user_id));
+    await env.DB.batch(statements);
+  }
 }
