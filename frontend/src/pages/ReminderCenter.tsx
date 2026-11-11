@@ -44,10 +44,11 @@ export default function ReminderCenter(){
  async function toggle(field:"bills"|"budgets"|"subscriptions"|"debts",current:number){await mutate("/notifications/preferences","PATCH",{[field]:current?0:1});reload();}
  async function saveDailyReminder(enabled:boolean,time=dailyTime){
   if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)){setTestStatus("Choose a valid reminder time.");return;}
-  setDailyEnabled(enabled);setDailyTime(time);
-  await updateSettings({daily_expense_reminder_enabled:enabled?1:0,daily_expense_reminder_time:time});
-  if(isNative&&permission==="granted")await syncDailyReminder(enabled,time);
-  setTestStatus(enabled?"Daily expense reminder set for "+time+".":"Daily expense reminder turned off.");
+  try{
+   await updateSettings({daily_expense_reminder_enabled:enabled?1:0,daily_expense_reminder_time:time});
+   setDailyEnabled(enabled);setDailyTime(time);
+   setTestStatus(enabled?"Daily expense reminder set for "+time+".":"Daily expense reminder turned off.");
+  }catch(error){setTestStatus(error instanceof Error?error.message:"Could not save reminder settings.");}
  }
  async function enableNotifications(){
   setTestStatus(null);
