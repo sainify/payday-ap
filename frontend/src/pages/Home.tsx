@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Wallet,
@@ -27,6 +27,7 @@ import { TopBar } from "@/components/layout/TopBar";
 import { useApp } from "@/context/AppContext";
 import { useDashboard, mutate } from "@/hooks/useData";
 import { formatINR } from "@/lib/currency";
+import { isNativePayday,PaydayNative } from "@/lib/native";
 import clsx from "clsx";
 
 export default function Home() {
@@ -35,6 +36,7 @@ export default function Home() {
 
   const firstName = user?.name?.split(" ")[0] || "there";
   const cycle = data?.cycle;
+  useEffect(()=>{if(!isNativePayday() || !data)return;PaydayNative.updateWidget({balance:formatINR(data.availableBalance||0),spent:formatINR(data.spentThisCycle||0)}).catch(()=>{});},[data?.availableBalance,data?.spentThisCycle]);
   const [widgetOrder,setWidgetOrder]=useState<string[]>(()=>{try{const saved=JSON.parse(localStorage.getItem("payday:dashboard-order")||"[]");return ["balance","safe","alerts","summary"].every(id=>saved.includes(id))?saved:["balance","safe","alerts","summary"];}catch{return ["balance","safe","alerts","summary"];}});
   const [customizeOpen,setCustomizeOpen]=useState(false);
   function moveWidget(index:number,direction:-1|1){const next=[...widgetOrder];const target=index+direction;if(target<0||target>=next.length)return;[next[index],next[target]]=[next[target],next[index]];setWidgetOrder(next);localStorage.setItem("payday:dashboard-order",JSON.stringify(next));}
