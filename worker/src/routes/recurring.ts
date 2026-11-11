@@ -30,11 +30,11 @@ export async function createRecurring(ctx: Ctx): Promise<Response> {
   const id = crypto.randomUUID();
   await ctx.env.DB.prepare(
     `INSERT INTO recurring_expenses
-      (id, user_id, title, amount, category_id, frequency, next_due_date, is_subscription, note)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      (id, user_id, title, amount, category_id, frequency, next_due_date, is_subscription, note, auto_post_enabled)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     id, ctx.userId, body.title.trim(), body.amount, body.category_id || null,
-    frequency, body.next_due_date, body.is_subscription ? 1 : 0, body.note || null
+    frequency, body.next_due_date, body.is_subscription ? 1 : 0, body.note || null, body.auto_post_enabled ? 1 : 0
   ).run();
   return json({ id, ...body, frequency, auto_post_enabled: body.auto_post_enabled ? 1 : 0 }, { status: 201 }, ctx.origin);
 }
