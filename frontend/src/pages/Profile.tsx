@@ -9,6 +9,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { useApp } from "@/context/AppContext";
 import { api } from "@/lib/api";
 import { applyAccent,getAccent,type AccentName } from "@/lib/accent";
+import { BIOMETRIC_KEY,isNativePayday,PaydayNative } from "@/lib/native";
 
 export default function Profile(){
  const {user,settings,theme,setTheme,updateSettings,logout}=useApp();const navigate=useNavigate();
