@@ -62,6 +62,7 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
     category_id?: string | null;
     note?: string | null;
     txn_date: string;
+    wallet_id?: string | null;
   }>();
 
   if (!body.type || !["expense", "income"].includes(body.type)) {
@@ -144,9 +145,14 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
   }
 
   const id = crypto.randomUUID();
+  const walletId = body.wallet_id || `wallet_default_${ctx.userId}`;
+  const wallet = await ctx.env.DB.prepare(
+    "SELECT id FROM wallets WHERE id = ? AND user_id = ? AND is_archived = 0"
+  ).bind(walletId, ctx.userId).first();
+  if (!wallet) return errorResponse("Wallet not found. Please choose an active wallet.", 404, ctx.origin);
 
   await ctx.env.DB.prepare(
-    "INSERT INTO transactions (id, user_id, type, amount, category_id, note, txn_date) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO transactions (id, user_id, type, amount, category_id, note, txn_date, wallet_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
   )
     .bind(
       id,
@@ -155,7 +161,8 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
       body.amount,
       body.category_id || null,
       body.note || null,
-      body.txn_date
+      body.txn_date,
+      walletId
     )
     .run();
 
@@ -167,6 +174,7 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
       category_id: body.category_id || null,
       note: body.note || null,
       txn_date: body.txn_date,
+      wallet_id: walletId,
     },
     { status: 201 },
     ctx.origin
