@@ -94,6 +94,12 @@ export default function Home() {
                     Expected salary credit: {new Date(settings.expected_salary_date + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                   </div>
                 )}
+                {(data?.expectedSalaryAmount || data?.salaryReceivedThisCycle) ? (
+                  <div className="mt-1 text-[11px] text-ink-faint">
+                    Received this cycle: {formatINR(data?.salaryReceivedThisCycle ?? 0)}
+                    {data?.expectedSalaryAmount ? " • Pending: " + formatINR(data.pendingSalaryAmount ?? 0) : ""}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
