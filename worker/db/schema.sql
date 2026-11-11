@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   currency TEXT NOT NULL DEFAULT 'INR',
-  salary_cycle_day INTEGER NOT NULL DEFAULT 1,
+  salary_cycle_day INTEGER NOT NULL DEFAULT 24,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
