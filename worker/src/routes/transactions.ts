@@ -154,6 +154,7 @@ export async function createTransaction(ctx: Ctx): Promise<Response> {
 
   const id = crypto.randomUUID();
   const walletId = body.wallet_id || `wallet_default_${ctx.userId}`;
+  await ctx.env.DB.prepare("INSERT OR IGNORE INTO wallets (id,user_id,name,kind,opening_balance,currency) SELECT ?,id,'Main wallet','bank',0,currency FROM users WHERE id=?").bind(`wallet_default_${ctx.userId}`,ctx.userId).run();
   const wallet = await ctx.env.DB.prepare(
     "SELECT id FROM wallets WHERE id = ? AND user_id = ? AND is_archived = 0"
   ).bind(walletId, ctx.userId).first();
