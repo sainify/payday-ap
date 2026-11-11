@@ -20,6 +20,9 @@ export interface UserSettings {
   split_goals?: number;
   split_emergency?: number;
   notifications_enabled?: number;
+  expected_salary_date?: string | null;
+  daily_expense_reminder_enabled?: number;
+  daily_expense_reminder_time?: string;
 }
 
 export interface Category {
