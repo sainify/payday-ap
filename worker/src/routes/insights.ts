@@ -193,6 +193,14 @@ export async function coach(ctx: Ctx): Promise<Response> {
   const total = Number(recent?.total||0);
   const previous = Number(prior?.total||0);
   const change = previous>0 ? ((total-previous)/previous)*100 : null;
+  const categoryTrends = await ctx.env.DB.prepare(`
+    SELECT COALESCE(c.name,'Uncategorised') AS category,
+      SUM(CASE WHEN t.txn_date >= ? THEN t.amount ELSE 0 END) AS recent,
+      SUM(CASE WHEN t.txn_date < ? THEN t.amount ELSE 0 END) AS prior
+    FROM transactions t LEFT JOIN categories c ON c.id=t.category_id
+    WHERE t.user_id=? AND t.type='expense' AND t.txn_date >= date(?, '-60 day') AND t.txn_date < ?
+    GROUP BY category
+  `).bind(from,from,ctx.userId,from,from).all<{category:string;recent:number;prior:number}>();
   const days = Math.max(1,Math.ceil((new Date(today+"T00:00:00").getTime()-new Date(from+"T00:00:00").getTime())/86400000)+1);
   const daily = total/days;
   const top = categories.results[0];
@@ -205,6 +213,12 @@ export async function coach(ctx: Ctx): Promise<Response> {
   const alerts: Array<{kind:string;title:string;detail:string}> = [];
   if(change!==null && change>20) alerts.push({kind:"spending-rise",title:"Spending is rising",detail:`Your last 60 days' spending is ${Math.round(change)}% higher than the previous 60 days.`});
   if(top && concentration>0.35) alerts.push({kind:"concentration",title:`${top.category} is your top category`,detail:`It accounts for ${Math.round(concentration*100)}% of recorded spending in this period.`});
+  for (const trend of categoryTrends.results) {
+    const recentSpend=Number(trend.recent||0), priorSpend=Number(trend.prior||0);
+    if(priorSpend>=500 && recentSpend>priorSpend*1.4 && recentSpend-priorSpend>=500) {
+      alerts.push({kind:"category-spike",title:`${trend.category} spending increased`,detail:`${trend.category} spending is ${Math.round((recentSpend/priorSpend-1)*100)}% higher than the previous 60-day period.`});
+    }
+  }
   const tips: string[] = [];
   if(!top) tips.push("Record a few transactions to unlock more useful spending patterns.");
   else tips.push(`Review ${top.category}: it is currently your largest spending category.`);
