@@ -3,7 +3,7 @@ import { corsHeaders, errorResponse } from "../utils/response";
 
 const TABLES = [
   "salary_entries", "transactions", "bills", "goals", "savings_entries", "lending_entries",
-  "budgets", "recurring_expenses", "emergency_funds", "debts", "reminder_preferences",
+  "budgets", "recurring_expenses", "emergency_funds", "debts", "reminder_preferences", "wallets", "wallet_transfers",
 ] as const;
 
 export async function exportData(ctx: Ctx): Promise<Response> {
@@ -26,6 +26,8 @@ export async function exportData(ctx: Ctx): Promise<Response> {
     for (const g of data.goals as Array<Record<string, unknown>>) rows.push(["goal", String(g.target_date || ""), String(g.title || "Goal"), String(g.target_amount || 0), "target", "", `saved=${g.saved_amount || 0}`]);
     for (const r of data.recurring_expenses as Array<Record<string, unknown>>) rows.push([r.is_subscription ? "subscription" : "recurring", String(r.next_due_date || ""), String(r.title || "Recurring"), String(r.amount || 0), r.active ? "active" : "paused", String(r.category_id || ""), String(r.frequency || "")]);
     for (const d of data.debts as Array<Record<string, unknown>>) rows.push(["debt", String(d.next_due_date || ""), String(d.title || "Debt"), String(d.outstanding_amount || 0), String(d.status || ""), String(d.lender || ""), `emi=${d.emi_amount || 0}; interest=${d.interest_rate || 0}`]);
+    for (const w of data.wallets as Array<Record<string, unknown>>) rows.push(["wallet", "", String(w.name || "Wallet"), String(w.opening_balance || 0), String(w.is_archived ? "archived" : "active"), String(w.kind || ""), String(w.currency || "INR")]);
+    for (const x of data.wallet_transfers as Array<Record<string, unknown>>) rows.push(["wallet_transfer", String(x.transfer_date || ""), "Wallet transfer", String(x.amount || 0), "completed", String(x.from_wallet_id || ""), String(x.to_wallet_id || "")]);
 
     const csv = rows.map((r) => r.map(csvCell).join(",")).join("\n");
     return new Response(csv, { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="payday-export.csv"', ...corsHeaders(ctx.origin) } });
