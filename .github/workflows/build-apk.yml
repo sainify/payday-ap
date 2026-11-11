@@ -59,6 +59,8 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: Create Android project
         run: npx cap add android
+      - name: Install PAYDAY native biometric and home-screen widget components
+        run: node ../scripts/patch-android.mjs
       - name: Sync Android plugins and assets
         run: npx cap sync android
       - name: Build debug APK
