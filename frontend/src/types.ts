@@ -120,6 +120,7 @@ export interface RecurringExpense {
   next_due_date: string;
   is_subscription: number;
   active: number;
+  auto_post_enabled?: number;
   note?: string | null;
   created_at?: string;
 }
