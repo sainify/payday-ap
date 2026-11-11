@@ -10,7 +10,7 @@ export async function getDashboard(ctx: Ctx): Promise<Response> {
   const cycle = getSalaryCycle(24);
   const today = toISODate(new Date());
   const [salaryTotal, incomeTotal, expenseTotal, savingsTotal, latestSalary,
-    spentThisCycleRow, savedThisCycleRow, cycleIncomeRow] = await Promise.all([
+    spentThisCycleRow, savedThisCycleRow, salaryReceivedThisCycleRow, expectedSalaryRow] = await Promise.all([
     ctx.env.DB.prepare("SELECT COALESCE(SUM(amount),0) AS total FROM salary_entries WHERE user_id = ? AND salary_date <= ?")
       .bind(ctx.userId, today).first<{total:number}>(),
     ctx.env.DB.prepare(`SELECT COALESCE(SUM(t.amount),0) AS total
@@ -29,12 +29,10 @@ export async function getDashboard(ctx: Ctx): Promise<Response> {
       .bind(ctx.userId,cycle.start,today).first<{total:number}>(),
     ctx.env.DB.prepare("SELECT COALESCE(SUM(amount),0) AS total FROM savings_entries WHERE user_id=? AND entry_date>=? AND entry_date<=?")
       .bind(ctx.userId,cycle.start,today).first<{total:number}>(),
-    ctx.env.DB.prepare(`SELECT COALESCE(SUM(t.amount),0) AS total FROM transactions t
-      LEFT JOIN categories c ON c.id=t.category_id
-      WHERE t.user_id=? AND t.type='income' AND t.txn_date>=? AND t.txn_date<=?
-      AND NOT (LOWER(COALESCE(c.name,''))='salary' AND EXISTS (
-        SELECT 1 FROM salary_entries s WHERE s.user_id=t.user_id AND s.salary_date=t.txn_date AND ABS(s.amount-t.amount)<0.01
-      ))`).bind(ctx.userId,cycle.start,today).first<{total:number}>(),
+    ctx.env.DB.prepare("SELECT COALESCE(SUM(amount),0) AS total FROM salary_entries WHERE user_id=? AND salary_date>=? AND salary_date<=?")
+      .bind(ctx.userId,cycle.start,today).first<{total:number}>(),
+    ctx.env.DB.prepare("SELECT expected_salary_date FROM user_settings WHERE user_id=?")
+      .bind(ctx.userId).first<{expected_salary_date:string|null}>(),
   ]);
 
   // Lifetime net cash balance carries across salary-cycle boundaries. Only received salary entries count.
@@ -62,7 +60,6 @@ export async function getDashboard(ctx: Ctx): Promise<Response> {
   const safeToSpendToday=calcSafeToSpend(availableBalance,upcomingBillsTotal,cycle.daysRemaining);
   const spentThisCycle=Number(spentThisCycleRow?.total||0);
   const savedThisCycle=Number(savedThisCycleRow?.total||0);
-  const cycleIncome=Number(salaryTotal ? 0 : 0) + Number(cycleIncomeRow?.total||0);
   const [{predicted,avgDailySpend}] = [predictCycleEndBalance(availableBalance,spentThisCycle,cycle.cycleDay,cycle.totalDays)];
   const knownFutureCommitments=upcomingBillsTotal+Number(recurringDue?.total||0)+Number(debtsDue?.total||0);
   const forecastEndBalance=predicted-knownFutureCommitments;
@@ -77,7 +74,9 @@ export async function getDashboard(ctx: Ctx): Promise<Response> {
   else if(availableBalance>0) smartAlerts.push({type:"forecast",severity:"info",title:"Cycle-end forecast",message:`About ₹${Math.round(forecastEndBalance).toLocaleString("en-IN")} may remain at the current pace.`});
 
   return json({
-    availableBalance,safeToSpendToday,spentThisCycle,savedThisCycle,cycleIncome,
+    availableBalance,safeToSpendToday,spentThisCycle,savedThisCycle,
+    salaryReceivedThisCycle:Number(salaryReceivedThisCycleRow?.total||0),
+    expectedSalaryDate:expectedSalaryRow?.expected_salary_date||null,
     upcomingBills,cycle,currentSalary:latestSalary?.amount||0,recentTransactions,
     smartAlerts:smartAlerts.slice(0,4),
     forecast:{predictedEndBalance:Math.max(0,forecastEndBalance),rawPredictedEndBalance:forecastEndBalance,avgDailySpend,knownFutureCommitments}
