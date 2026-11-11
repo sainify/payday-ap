@@ -244,6 +244,13 @@ export default {
       }
 
       if (
+        sub === "/transactions/import" &&
+        method === "POST"
+      ) {
+        return await transactions.importTransactions(ctx);
+      }
+
+      if (
         segments[0] === "transactions" &&
         segments[1] &&
         method === "DELETE"
