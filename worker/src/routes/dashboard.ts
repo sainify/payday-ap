@@ -17,7 +17,7 @@ export async function getDashboard(ctx: Ctx): Promise<Response> {
       FROM transactions t LEFT JOIN categories c ON c.id=t.category_id
       WHERE t.user_id=? AND t.type='income' AND t.txn_date<=?
       AND NOT (LOWER(COALESCE(c.name,''))='salary' AND EXISTS (
-        SELECT 1 FROM salary_entries s WHERE s.user_id=t.user_id AND s.salary_date=t.txn_date AND ABS(s.amount-t.amount)<0.01
+        SELECT 1 FROM salary_entries s WHERE s.user_id=t.user_id AND s.salary_date=t.txn_date
       ))`).bind(ctx.userId,today).first<{total:number}>(),
     ctx.env.DB.prepare("SELECT COALESCE(SUM(amount),0) AS total FROM transactions WHERE user_id=? AND type='expense' AND txn_date<=?")
       .bind(ctx.userId,today).first<{total:number}>(),
@@ -31,8 +31,8 @@ export async function getDashboard(ctx: Ctx): Promise<Response> {
       .bind(ctx.userId,cycle.start,today).first<{total:number}>(),
     ctx.env.DB.prepare("SELECT COALESCE(SUM(amount),0) AS total FROM salary_entries WHERE user_id=? AND salary_date>=? AND salary_date<=?")
       .bind(ctx.userId,cycle.start,today).first<{total:number}>(),
-    ctx.env.DB.prepare("SELECT expected_salary_date FROM user_settings WHERE user_id=?")
-      .bind(ctx.userId).first<{expected_salary_date:string|null}>(),
+    ctx.env.DB.prepare("SELECT expected_salary_date,expected_salary_amount FROM user_settings WHERE user_id=?")
+      .bind(ctx.userId).first<{expected_salary_date:string|null;expected_salary_amount:number}>(),
   ]);
 
   // Lifetime net cash balance carries across salary-cycle boundaries. Only received salary entries count.
@@ -77,6 +77,8 @@ export async function getDashboard(ctx: Ctx): Promise<Response> {
     availableBalance,safeToSpendToday,spentThisCycle,savedThisCycle,
     salaryReceivedThisCycle:Number(salaryReceivedThisCycleRow?.total||0),
     expectedSalaryDate:expectedSalaryRow?.expected_salary_date||null,
+    expectedSalaryAmount:Number(expectedSalaryRow?.expected_salary_amount||0),
+    pendingSalaryAmount:Math.max(0,Number(expectedSalaryRow?.expected_salary_amount||0)-Number(salaryReceivedThisCycleRow?.total||0)),
     upcomingBills,cycle,currentSalary:latestSalary?.amount||0,recentTransactions,
     smartAlerts:smartAlerts.slice(0,4),
     forecast:{predictedEndBalance:Math.max(0,forecastEndBalance),rawPredictedEndBalance:forecastEndBalance,avgDailySpend,knownFutureCommitments}
