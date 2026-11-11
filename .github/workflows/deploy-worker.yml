@@ -1,0 +1,56 @@
+name: Deploy PAYDAY Worker and apply additive D1 migration
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "worker/**"
+      - ".github/workflows/deploy-worker.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Verify Cloudflare credentials
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || (echo "Missing GitHub secret CLOUDFLARE_API_TOKEN" && exit 1)
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || (echo "Missing GitHub secret CLOUDFLARE_ACCOUNT_ID" && exit 1)
+      - name: Install Worker dependencies
+        run: npm install
+      - name: Typecheck Worker
+        run: npm run typecheck
+      - name: Apply missing additive D1 columns
+        run: |
+          set -e
+          ensure_column() {
+            COLUMN="$1"
+            DEFINITION="$2"
+            if ! npx wrangler d1 execute payday-db --remote --yes --command "PRAGMA table_info(user_settings)" | grep -q "$COLUMN"; then
+              echo "Adding user_settings.$COLUMN"
+              npx wrangler d1 execute payday-db --remote --yes --command "ALTER TABLE user_settings ADD COLUMN $COLUMN $DEFINITION"
+            else
+              echo "user_settings.$COLUMN already exists"
+            fi
+          }
+          ensure_column expected_salary_date "TEXT"
+          ensure_column expected_salary_amount "REAL NOT NULL DEFAULT 0"
+          ensure_column opening_balance "REAL NOT NULL DEFAULT 0"
+          ensure_column daily_expense_reminder_enabled "INTEGER NOT NULL DEFAULT 0"
+          ensure_column daily_expense_reminder_time "TEXT NOT NULL DEFAULT '20:00'"
+      - name: Deploy PAYDAY Worker
+        run: npx wrangler deploy
