@@ -27,6 +27,7 @@ import ReminderCenter from "@/pages/ReminderCenter";
 import ExpenseScanner from "@/pages/ExpenseScanner";
 import ReceiptVault from "@/pages/ReceiptVault";
 import WalletsPage from "@/pages/Wallets";
+import TransactionRules from "@/pages/TransactionRules";
 
 function Splash() {
   return (
@@ -87,6 +88,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/transactions" element={<Transactions />} />
         <Route path="/wallets" element={<WalletsPage />} />
+        <Route path="/transaction-rules" element={<TransactionRules />} />
         <Route path="/insights" element={<Insights />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/add/:type" element={<AddEntry />} />
