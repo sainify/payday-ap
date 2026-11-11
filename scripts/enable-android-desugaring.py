@@ -1,61 +1,59 @@
 from pathlib import Path
-
-def set_compile_sdk(path: Path, required: bool = False) -> bool:
-    text = path.read_text()
-    lines = text.splitlines()
-    changed = False
-    for i, line in enumerate(lines):
-        if line.strip().startswith("compileSdk"):
-            indent = line[:len(line) - len(line.lstrip())]
-            replacement = indent + ("compileSdk = 36" if path.suffix == ".kts" else "compileSdk 36")
-            if line != replacement:
-                lines[i] = replacement
-                changed = True
-            break
-    else:
-        if required:
-            raise SystemExit(f"No compileSdk declaration found in {path}")
-        return False
-    if changed:
-        path.write_text("\n".join(lines) + "\n")
-    return changed
+import re
 
 app_dir = Path("flutter_app/android/app")
 app = app_dir / "build.gradle.kts"
-if not app.exists():
+kotlin = app.exists()
+if not kotlin:
     app = app_dir / "build.gradle"
 if not app.exists():
     raise SystemExit("Android app Gradle file not found")
-set_compile_sdk(app, required=True)
+
 text = app.read_text()
-if app.suffix == ".kts":
+lines = text.splitlines()
+for i, line in enumerate(lines):
+    if line.strip().startswith("compileSdk"):
+        indent = line[:len(line) - len(line.lstrip())]
+        lines[i] = indent + ("compileSdk = 36" if kotlin else "compileSdk 36")
+        break
+else:
+    raise SystemExit("compileSdk declaration not found")
+text = "\n".join(lines) + "\n"
+
+if kotlin:
     if "isCoreLibraryDesugaringEnabled = true" not in text:
-        text = text.replace("compileOptions {", "compileOptions {\n        isCoreLibraryDesugaringEnabled = true", 1)
-    if "coreLibraryDesugaring(" not in text:
-        text = text.replace("dependencies {", 'dependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")', 1)
+        text = re.sub(r"(compileOptions\\s*\\{)", r"\\1\\n        isCoreLibraryDesugaringEnabled = true", text, count=1)
+    if not re.search(r"coreLibraryDesugaring\\s*\\(", text):
+        text += '\n\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n'
 else:
     if "coreLibraryDesugaringEnabled true" not in text:
-        text = text.replace("compileOptions {", "compileOptions {\n        coreLibraryDesugaringEnabled true", 1)
-    if "coreLibraryDesugaring " not in text:
-        text = text.replace("dependencies {", "dependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'", 1)
+        text = re.sub(r"(compileOptions\\s*\\{)", r"\\1\\n        coreLibraryDesugaringEnabled true", text, count=1)
+    if not re.search(r"coreLibraryDesugaring\\s+['\"]", text):
+        text += "\n\ndependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'\n}\n"
+
+if "desugar_jdk_libs:2.1.4" not in text:
+    raise SystemExit("Desugaring dependency insertion verification failed")
 app.write_text(text)
 
-# Remove the failed lifecycle hook from the root Gradle file.
-root = Path("flutter_app/android/build.gradle.kts")
-if root.exists():
-    content = root.read_text()
-    marker = "// Align Android library plugins"
-    if marker in content:
-        content = content.split(marker, 1)[0].rstrip() + "\n"
-        root.write_text(content)
-
-# Patch each Flutter plugin Android library project after pub get.
+# Patch cached Flutter Android plugins' compileSdk directly, avoiding Gradle lifecycle hooks.
 cache = Path.home() / ".pub-cache" / "hosted" / "pub.dev"
-patched = []
+patched = 0
 if cache.exists():
-    for plugin_gradle in cache.glob("*/android/build.gradle*"):
-        if plugin_gradle.is_file() and set_compile_sdk(plugin_gradle):
-            patched.append(str(plugin_gradle))
-if not patched:
-    raise SystemExit("No cached Flutter plugin Android Gradle compileSdk declarations were patched")
-print(f"Configured app compileSdk 36 and patched {len(patched)} Flutter plugin Android modules.")
+    for gradle in cache.glob("*/android/build.gradle*"):
+        if not gradle.is_file():
+            continue
+        src = gradle.read_text()
+        out = []
+        changed = False
+        for line in src.splitlines():
+            if line.strip().startswith("compileSdk"):
+                indent = line[:len(line) - len(line.lstrip())]
+                repl = indent + ("compileSdk = 36" if gradle.suffix == ".kts" else "compileSdk 36")
+                changed |= line != repl
+                line = repl
+            out.append(line)
+        if changed:
+            gradle.write_text("\n".join(out) + "\n")
+            patched += 1
+
+print(f"Verified app compileSdk 36 + desugar_jdk_libs 2.1.4; patched {patched} plugin Gradle files.")
