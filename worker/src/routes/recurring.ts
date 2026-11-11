@@ -99,3 +99,30 @@ function nextDueDate(date: string, frequency: string): string {
   const lastDay=new Date(Date.UTC(normalizedYear,normalizedMonth,0)).getUTCDate();
   return `${normalizedYear}-${String(normalizedMonth).padStart(2,"0")}-${String(Math.min(day,lastDay)).padStart(2,"0")}`;
 }
+
+
+/** Cron entry point: post only items the user explicitly opted into automatic posting. */
+export async function autoPostDue(env: { DB: D1Database }): Promise<void> {
+  const today = toISODate(new Date());
+  const { results } = await env.DB.prepare("SELECT * FROM recurring_expenses WHERE active=1 AND auto_post_enabled=1 AND next_due_date<=? ORDER BY next_due_date ASC")
+    .bind(today).all<{id:string;user_id:string;title:string;amount:number;category_id:string|null;frequency:string;next_due_date:string}>();
+  for (const item of results) {
+    const walletId = `wallet_default_${item.user_id}`;
+    const user = await env.DB.prepare("SELECT currency FROM users WHERE id=?").bind(item.user_id).first<{currency:string}>();
+    const settings = await env.DB.prepare("SELECT opening_balance FROM user_settings WHERE user_id=?").bind(item.user_id).first<{opening_balance:number}>();
+    await env.DB.prepare("INSERT OR IGNORE INTO wallets (id,user_id,name,kind,opening_balance,currency) VALUES (?,?,'Main wallet','bank',?,?)")
+      .bind(walletId,item.user_id,settings?.opening_balance || 0,user?.currency || "INR").run();
+    const statements: D1PreparedStatement[] = [];
+    let due = item.next_due_date;
+    let count = 0;
+    while (due <= today && count < 24) {
+      statements.push(env.DB.prepare("INSERT INTO transactions (id,user_id,type,amount,category_id,note,txn_date,wallet_id) VALUES (?,?,'expense',?,?,?,?,?)")
+        .bind(crypto.randomUUID(),item.user_id,item.amount,item.category_id,item.title,due,walletId));
+      due = nextDueDate(due,item.frequency);
+      count++;
+    }
+    statements.push(env.DB.prepare("UPDATE recurring_expenses SET next_due_date=? WHERE id=? AND user_id=?")
+      .bind(due,item.id,item.user_id));
+    await env.DB.batch(statements);
+  }
+}
