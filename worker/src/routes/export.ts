@@ -9,9 +9,16 @@ const TABLES = [
 export async function exportData(ctx: Ctx): Promise<Response> {
   const format = (ctx.url.searchParams.get("format") || "json").toLowerCase();
   const data: Record<string, unknown[]> = {};
+  const from = ctx.url.searchParams.get("from");
+  const to = ctx.url.searchParams.get("to");
+  if ((from && !/^\\d{4}-\\d{2}-\\d{2}$/.test(from)) || (to && !/^\\d{4}-\\d{2}-\\d{2}$/.test(to)) || (from && to && from > to)) return errorResponse("Use a valid statement date range.",400,ctx.origin);
 
   for (const table of TABLES) {
-    const { results } = await ctx.env.DB.prepare(`SELECT * FROM ${table} WHERE user_id = ?`).bind(ctx.userId).all();
+    let sql = `SELECT * FROM ${table} WHERE user_id = ?`;
+    const params: unknown[] = [ctx.userId];
+    if (table === "transactions") { if (from) { sql += " AND txn_date >= ?"; params.push(from); } if (to) { sql += " AND txn_date <= ?"; params.push(to); } }
+    if (table === "salary_entries") { if (from) { sql += " AND salary_date >= ?"; params.push(from); } if (to) { sql += " AND salary_date <= ?"; params.push(to); } }
+    const { results } = await ctx.env.DB.prepare(sql).bind(...params).all();
     data[table] = results as unknown[];
   }
 
